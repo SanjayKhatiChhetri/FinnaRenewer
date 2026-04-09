@@ -107,7 +107,16 @@ func parseRenewalResponse(body io.Reader, loans []Loan) ([]RenewalResult, error)
 		switch {
 		case statusCol.Find(".alert-success").Length() > 0:
 			result.Success = true
-			result.NewDueDate = parseDueDate(statusCol.Text())
+
+			// Try to parse new due date
+			nd := parseDueDate(statusCol.Text())
+			if nd.IsZero() {
+				// GitHub Actions sometimes gets stripped HTML from Cloudflare.
+				// Fall back to the original due date so formatting stays correct.
+				nd = loan.DueDate
+			}
+			result.NewDueDate = nd
+
 
 		case statusCol.Find(".alert-danger").Length() > 0:
 			result.Success = false
