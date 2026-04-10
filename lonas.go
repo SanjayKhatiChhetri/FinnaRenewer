@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +16,11 @@ const (
 	checkedOutURL = finnaBaseURL + "/MyResearch/CheckedOut"
 	dueDateFormat = "2.1.2006 15.04"
 )
+
+// dueDateRegex matches the Finnish due date+time pattern "DD.M.YYYY HH.MM"
+// anywhere in a block of text, even when adjacent HTML elements have been
+// concatenated without whitespace by goquery (e.g. "23.59Renewal Successful").
+var dueDateRegex = regexp.MustCompile(`(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})`)
 
 // Loan represents a single checked-out item.
 type Loan struct {
@@ -95,23 +101,32 @@ func parseCheckoutPage(body io.Reader) ([]Loan, string, error) {
 	return loans, csrf, nil
 }
 
-// parseDueDate extracts the due date from status-column text like:
+// parseDueDate extracts the due date from a block of text that contains
+// "Due date: DD.M.YYYY HH.MM" somewhere inside it.
 //
-//	"Tiedekirjasto Pegasus  Checked Out: 8.10.2021  Due date: 23.4.2026 23.59"
+// We use a regex rather than splitting on whitespace because goquery's .Text()
+// concatenates adjacent sibling elements without inserting spaces. For example,
+// the renewal response produces text like:
+//
+//	"Due date: 23.4.2026 23.59Renewal Successful"
+//
+// where the time "23.59" is glued directly to "Renewal". The regex anchors on
+// the exact numeric pattern so it extracts the date correctly regardless of
+// what follows it.
 func parseDueDate(text string) time.Time {
+	// Only look at text after "Due date:" to avoid false matches elsewhere.
 	const marker = "Due date:"
 	idx := strings.Index(text, marker)
 	if idx < 0 {
 		return time.Time{}
 	}
-	rest := strings.TrimSpace(text[idx+len(marker):])
 
-	// Grab "DD.M.YYYY" and "HH.MM" as the first two space-separated tokens.
-	fields := strings.Fields(rest)
-	if len(fields) < 2 {
+	m := dueDateRegex.FindStringSubmatch(text[idx:])
+	if m == nil {
 		return time.Time{}
 	}
-	t, err := time.Parse(dueDateFormat, fields[0]+" "+fields[1])
+
+	t, err := time.Parse(dueDateFormat, m[1]+" "+m[2])
 	if err != nil {
 		return time.Time{}
 	}
