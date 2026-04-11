@@ -1,0 +1,184 @@
+<div class="login-tabs login-accordion">
+    <ul class="loginTabs nav nav-tabs visible-md visible-lg" role="tablist">
+                      <li class="Shibboleth active" data-bs-tab="Shibboleth" role="presentation">
+          <a href="#" class="Shibboleth nav-link active" data-bs-toggle="tab" data-bs-target=".tab-pane.Shibboleth-tab" role="tab" data-lightbox-ignore="" aria-selected="true">HAKA login</a>
+        </li>
+                      <li class="Database" data-bs-tab="Database" role="presentation">
+          <a href="#" class="Database nav-link" data-bs-toggle="tab" data-bs-target=".tab-pane.Database-tab" role="tab" data-lightbox-ignore="" aria-selected="false" tabindex="-1">Finna ID</a>
+        </li>
+                      <li class="MultiILS" data-bs-tab="MultiILS" role="presentation">
+          <a href="#" class="MultiILS nav-link" data-bs-toggle="tab" data-bs-target=".tab-pane.MultiILS-tab" role="tab" data-lightbox-ignore="" aria-selected="false" tabindex="-1">E-mail</a>
+        </li>
+          </ul>
+
+          <div class="accordion accordion-heading initiallyActive active">
+                <div class="accordion-toggle">
+          <a href="#" data-tab="Shibboleth" class="accordion-title">
+            <span class="title">HAKA login</span>
+            <i class="icon" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div><div class="tab-content">
+                      <div class="tab-pane Shibboleth-tab active" role="tabpanel">
+          <!-- START of: finna - Auth/Shibboleth/login.phtml -->
+<div>
+  <div class="login-col shibboleth-login">
+    <a href="https://www.finna.fi/Shibboleth.sso/Login?target=https%3A%2F%2Foula.finna.fi%2FMyResearch%2FHome%3Fauth_method%3DShibboleth&amp;entityID=https%3A%2F%2Flogin.oulu.fi%2Fidp%2Fshibboleth" data-lightbox-ignore="">
+      <img src="/themes/finna2/images/haka_login_vaaka_lg.png?_=1775556027" alt="Haka Login">
+      <span class="visually-hidden">Institutional Login of a University of Oulu</span>
+    </a>
+  </div>
+  <div class="login-col">
+    <span class="icon icon--font fi fi-info-circle login-info-icon" role="img" aria-hidden="true"></span>    <div class="login-description">
+      <p class="login-info">
+       Activate library services by adding a library card to your account.      </p>
+    </div>
+    <div class="login-description shibboleth">
+      When you login with the university user account, you will have remote access to e-resources purchased by the library.     </div>
+  </div>
+</div>
+<div class="clearfix"></div>
+<div class="login-description-terms">
+  When you log in using Haka, the service will store your user id, name and email address.
+  Read more about management of personal information on the <a href="/Content/privacy" data-lightbox-ignore="" target="_blank">Data protection page</a>.
+</div>
+<!-- END of: finna - Auth/Shibboleth/login.phtml -->
+        </div>
+                      <div class="tab-pane Database-tab" role="tabpanel">
+          <!-- START of: finna - Auth/Database/login.phtml -->
+<div>
+  <form method="post" class="form-vertical" action="/MyResearch/Home" name="loginForm">
+    <div class="login-col">
+      <!-- START of: finna - Auth/Database/loginfields.phtml -->
+      <div class="form-group">
+        <label class="form-label" for="login_Database_username">Finna ID: <span class="required-notice">(required)</span></label>
+        <input type="text" name="username" id="login_Database_username" value="" required="" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="login_Database_password">Password: <span class="required-notice">(required)</span></label>
+        <input type="password" name="password" id="login_Database_password" required="" class="form-control">
+      </div>
+<!-- END of: finna - Auth/Database/loginfields.phtml -->
+              <div class="form-group">
+          <label>
+            <input type="checkbox" name="remember_me"> Remember my login for the next 180 days          </label>
+          <div class="remember-me-info">Leave this unchecked on devices in shared use</div>
+        </div>
+            <input type="hidden" name="auth_method" value="Database">
+      <input type="hidden" name="csrf" value="ca2083a480e20aac5a8195593958e097-79f53d476bb0f91774c1fb5551ad2497">
+      <div class="form-group">
+        <input class="btn btn-primary" type="submit" name="processLogin" value="Login">
+      </div>
+      <div class="form-group">
+                  <a class="btn btn-link createAccountLink" href="/MyResearch/Account?auth_method=Database">Create New Finna ID</a>
+                          <a class="btn btn-link" href="/MyResearch/Recover?auth_method=Database">Forgot your password?</a>
+              </div>
+    </div>
+  </form>
+  <div class="login-col">
+    <span class="icon icon--font fi fi-info-circle login-info-icon" role="img" aria-hidden="true"></span>    <div class="login-description">
+      <p class="login-info">
+        When you add a library card to the account, you can use library services that are enabled by the card.      </p>
+    </div>
+    <div class="clearfix"></div>
+        <div class="login-description-terms">
+  Read about management of personal information on the <a href="/Content/privacy" data-lightbox-ignore="" target="_blank">Data protection page</a>.
+</div>
+  </div>
+</div>
+<div class="clearfix"></div>
+<!-- END of: finna - Auth/Database/login.phtml -->
+        </div>
+                      <div class="tab-pane MultiILS-tab" role="tabpanel">
+          <!-- START of: finna - Auth/MultiILS/login.phtml -->
+<div class="login-col">
+  <form method="post" class="form-vertical" action="/MyResearch/Home" name="loginForm" id="loginForm">
+    <!-- START of: finna - Auth/MultiILS/loginfields.phtml -->
+<div>
+  <div class="form-group">
+              <input type="hidden" id="login_MultiILS_target" name="target" value="oy">
+      <div><strong>Oulu University Library</strong></div>
+      </div>
+
+  <div class="form-group">
+    <label class="form-label password-login hidden" for="login_MultiILS_username">Finna ID: <span class="required-notice">(required)</span></label>
+    <label class="form-label email-login" for="login_MultiILS_username">Email: <span class="required-notice">(required)</span></label>
+    <input id="login_MultiILS_username" type="email" name="username" value="" required="" class="form-control" autocomplete="email">
+  </div>
+
+  <div class="form-group hidden">
+    <label class="form-label" for="login_MultiILS_password">Password / PIN*: <span class="required-notice">(required)</span></label>
+    <input id="login_MultiILS_password" type="password" name="password" required="" class="form-control">
+  </div>
+</div>
+
+<script nonce="">
+    //<!--
+      setupMultiILSLoginFields({"oy":"email"}, 'login_MultiILS_');
+    //-->
+</script>
+<!-- END of: finna - Auth/MultiILS/loginfields.phtml -->
+          <div class="form-group">
+        <div class="remember-me-ils">
+          <label>
+            <input type="checkbox" name="remember_me"> Remember my login for the next 180 days          </label>
+          <div class="remember-me-info">Leave this unchecked on devices in shared use</div>
+        </div>
+      </div>
+        <input type="hidden" name="auth_method" value="MultiILS">
+    <input type="hidden" name="csrf" value="ca2083a480e20aac5a8195593958e097-79f53d476bb0f91774c1fb5551ad2497">
+    <div class="clearfix"></div>
+    <div class="form-group">
+      <input class="btn btn-primary" type="submit" name="processLogin" value="Login">
+    </div>
+    <div class="form-group">
+      <p>
+        <a id="login_library_card_register" class="btn btn-link" href="/LibraryCards/Register?target=oy">Register as customer of the library</a>
+      </p>
+      <p>
+        <a id="recovery_link" class="btn btn-link recover-account-link hidden" href="#">Forgot your password?</a>
+      </p>
+    </div>
+  </form>
+</div>
+<div class="login-col">
+  <span class="icon icon--font fi fi-info-circle login-info-icon" role="img" aria-hidden="true"></span>  <div class="login-description">
+    <p class="login-info">
+      Submit the e-mail address you have given to the library. An e-mail message containing a login url will be sent to your e-mail address. If you don't receive the link shortly, please check your spam folder. NB! You must use the same device for the email and the link as you used for Oula-Finna login.<br><br>Read more about management of personal information on the <a href="/Content/privacy" data-lightbox-ignore="" target="_blank">Data protection page.</a>    </p>
+  </div>
+  <div class="clearfix"></div>
+    <div class="login-description-terms">
+  <p>When you log in using your library card, the service will store the library card number and PIN code as well as your name, email address and home library.</p>
+  <p>When you log in using your email address, the service will store your name, email address and home library.</p>
+  <p>Read more about management of personal information on the <a href="/Content/privacy" data-lightbox-ignore="" target="_blank">Data protection page</a>.</p>
+</div>
+</div>
+  <div class="clearfix"></div>
+
+<script nonce="">
+    //<!--
+      VuFind.displayILSPasswordRecoveryLink({"oy":false}, 'login_MultiILS_');
+  finna.layout.initILSSelfRegistrationLink({"oy":"\/LibraryCards\/Register?target=oy"}, 'login_MultiILS_');
+    //-->
+</script><!-- END of: finna - Auth/MultiILS/login.phtml -->
+        </div>
+          </div>
+          <div class="accordion accordion-heading">
+                <div class="accordion-toggle">
+          <a href="#" data-tab="Database" class="accordion-title">
+            <span class="title">Finna ID</span>
+            <i class="icon" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+          <div class="accordion accordion-heading">
+                <div class="accordion-toggle">
+          <a href="#" data-tab="MultiILS" class="accordion-title">
+            <span class="title">E-mail</span>
+            <i class="icon" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    
+    
+  </div>
