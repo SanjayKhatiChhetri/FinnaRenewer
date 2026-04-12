@@ -113,22 +113,16 @@ func parseCheckoutPage(body io.Reader) ([]Loan, string, error) {
 // where the time "23.59" is glued directly to "Renewal". The regex anchors on
 // the exact numeric pattern so it extracts the date correctly regardless of
 // what follows it.
+
 func parseDueDate(text string) time.Time {
-	// Only look at text after "Due date:" to avoid false matches elsewhere.
-	const marker = "Due date:"
-	idx := strings.Index(text, marker)
-	if idx < 0 {
-		return time.Time{}
-	}
+    m := dueDateRegex.FindStringSubmatch(text)
+    if m == nil {
+        return time.Time{}
+    }
 
-	m := dueDateRegex.FindStringSubmatch(text[idx:])
-	if m == nil {
-		return time.Time{}
-	}
-
-	t, err := time.Parse(dueDateFormat, m[1]+" "+m[2])
-	if err != nil {
-		return time.Time{}
-	}
-	return t
+    t, err := time.Parse("2.1.2006 15.04", m[1]+" "+m[2])
+    if err != nil {
+        return time.Time{}
+    }
+    return t
 }

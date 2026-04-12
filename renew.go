@@ -13,122 +13,151 @@ import (
 
 // RenewalResult holds the outcome for a single loan after the POST.
 type RenewalResult struct {
-	Loan       Loan
-	Success    bool
-	NewDueDate time.Time
-	ErrMsg     string // populated on failure
+    Loan       Loan
+    Success    bool
+    NewDueDate time.Time
+    ErrMsg     string
 }
 
-// renewAll sends a "Renew All" POST to Finna using the shared client,
-// replicating exactly what the browser sends when clicking Renew All → Yes.
-//
-// POST body (from HAR capture):
-//
-//	csrf=<token>&renewAll=1&selectAll=on
-//	&renewSelectedIDS[]=<id>&selectAllIDS[]=<id>&renewAllIDS[]=<id>  (per loan)
+// renewAll sends a "Renew All" POST to Finna using the shared client.
+// If DRY_RUN=true, it simulates success without sending any POST.
 func renewAll(cfg Config, csrf string, loans []Loan, client *http.Client) ([]RenewalResult, error) {
-	body := buildRenewalForm(csrf, loans)
 
-	req, err := http.NewRequest("POST", checkedOutURL, strings.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	setBaseHeaders(req)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Referer", checkedOutURL)
+    // ───────────────────────────────────────────────────────────────
+    // DRY RUN MODE — simulate success without touching Finna
+    // ───────────────────────────────────────────────────────────────
+    if cfg.DryRun {
+        results := make([]RenewalResult, len(loans))
+        for i, l := range loans {
+            results[i] = RenewalResult{
+                Loan:       l,
+                Success:    true,
+                NewDueDate: l.DueDate, // unchanged in dry-run
+            }
+        }
+        return results, nil
+    }
 
-	// Renewal can be slow when there are many items.
-	client.Timeout = 60 * time.Second
+    // ───────────────────────────────────────────────────────────────
+    // Build POST body
+    // ───────────────────────────────────────────────────────────────
+    body := buildRenewalForm(csrf, loans)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("POST renewal: %w", err)
-	}
-	defer resp.Body.Close()
+    req, err := http.NewRequest("POST", checkedOutURL, strings.NewReader(body))
+    if err != nil {
+        return nil, err
+    }
+    setBaseHeaders(req)
+    req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+    req.Header.Set("Referer", checkedOutURL)
 
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("renewal POST returned HTTP %d", resp.StatusCode)
-	}
+    // Renewal can be slow when many items exist.
+    client.Timeout = 60 * time.Second
 
-	return parseRenewalResponse(resp.Body, loans)
+    // ───────────────────────────────────────────────────────────────
+    // Send POST with retry logic
+    // ───────────────────────────────────────────────────────────────
+    resp, err := doRequestWithRetry(client, req)
+    if err != nil {
+        return nil, fmt.Errorf("POST renewal: %w", err)
+    }
+    defer resp.Body.Close()
+
+    // Session expired → caller will re-login and retry
+    if isLoginPage(resp.Request.URL) {
+        return nil, ErrSessionExpired
+    }
+
+    if resp.StatusCode != 200 {
+        return nil, fmt.Errorf("renewal POST returned HTTP %d", resp.StatusCode)
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // Parse renewal results
+    // ───────────────────────────────────────────────────────────────
+    return parseRenewalResponse(resp.Body, loans)
 }
 
 // buildRenewalForm constructs the URL-encoded POST body.
-// Each loan ID appears three times (renewSelectedIDS, selectAllIDS, renewAllIDS)
-// matching the exact format captured from the browser HAR.
 func buildRenewalForm(csrf string, loans []Loan) string {
-	v := url.Values{}
-	v.Set("csrf", csrf)
-	v.Set("renewAll", "1")
-	v.Set("selectAll", "on")
+    v := url.Values{}
+    v.Set("csrf", csrf)
+    v.Set("renewAll", "1")
+    v.Set("selectAll", "on")
 
-	for _, loan := range loans {
-		v.Add("renewSelectedIDS[]", loan.ID)
-		v.Add("selectAllIDS[]", loan.ID)
-		v.Add("renewAllIDS[]", loan.ID)
-	}
+    for _, loan := range loans {
+        v.Add("renewSelectedIDS[]", loan.ID)
+        v.Add("selectAllIDS[]", loan.ID)
+        v.Add("renewAllIDS[]", loan.ID)
+    }
 
-	return v.Encode()
+    return v.Encode()
 }
 
 // parseRenewalResponse reads the HTML from the renewal POST response and
 // matches each loan row to a success or failure outcome.
 func parseRenewalResponse(body io.Reader, loans []Loan) ([]RenewalResult, error) {
-	doc, err := goquery.NewDocumentFromReader(body)
-	if err != nil {
-		return nil, fmt.Errorf("parse renewal HTML: %w", err)
-	}
+    doc, err := goquery.NewDocumentFromReader(body)
+    if err != nil {
+        return nil, fmt.Errorf("parse renewal HTML: %w", err)
+    }
 
-	// Build a quick lookup from loan ID → Loan for title fallback.
-	loanByID := make(map[string]Loan, len(loans))
-	for _, l := range loans {
-		loanByID[l.ID] = l
-	}
+    // Map loan ID → original Loan
+    loanByID := make(map[string]Loan, len(loans))
+    for _, l := range loans {
+        loanByID[l.ID] = l
+    }
 
-	var results []RenewalResult
+    var results []RenewalResult
 
-	doc.Find("tr.myresearch-row").Each(func(_ int, row *goquery.Selection) {
-		id, ok := row.Find(`input[name="renewSelectedIDS[]"]`).First().Attr("value")
-		if !ok || id == "" {
-			return
-		}
+    doc.Find("tr.myresearch-row").Each(func(_ int, row *goquery.Selection) {
+        id, ok := row.Find(`input[name="renewSelectedIDS[]"]`).First().Attr("value")
+        if !ok || id == "" {
+            return
+        }
 
-		loan, known := loanByID[id]
-		if !known {
-			loan = Loan{
-				ID:    id,
-				Title: strings.TrimSpace(row.Find("h3.record-title").Text()),
-			}
-		}
+        loan := loanByID[id]
+        result := RenewalResult{Loan: loan}
 
-		result := RenewalResult{Loan: loan}
-		statusCol := row.Find(".status-column")
+        statusCol := row.Find(".status-column")
+        statusText := statusCol.Text()
 
-		switch {
-		case statusCol.Find(".alert-success").Length() > 0:
-			result.Success = true
+        // ───────────────────────────────────────────────────────────────
+        // SUCCESS
+        // ───────────────────────────────────────────────────────────────
+        if statusCol.Find(".alert-success").Length() > 0 {
+            result.Success = true
 
-			// Try to parse new due date
-			nd := parseDueDate(statusCol.Text())
-			if nd.IsZero() {
-				// GitHub Actions sometimes gets stripped HTML from Cloudflare.
-				// Fall back to the original due date so formatting stays correct.
-				nd = loan.DueDate
-			}
-			result.NewDueDate = nd
+            // Try to parse new due date
+            newDue := parseDueDate(statusText)
 
+            // Cloudflare sometimes strips HTML → fallback to original due date
+            if newDue.IsZero() {
+                newDue = loan.DueDate
+            }
 
-		case statusCol.Find(".alert-danger").Length() > 0:
-			result.Success = false
-			result.ErrMsg = strings.TrimSpace(statusCol.Find(".alert-danger").Text())
+            result.NewDueDate = newDue
+            results = append(results, result)
+            return
+        }
 
-		default:
-			result.Success = false
-			result.ErrMsg = "no renewal status in response"
-		}
+        // ───────────────────────────────────────────────────────────────
+        // FAILURE
+        // ───────────────────────────────────────────────────────────────
+        if statusCol.Find(".alert-danger").Length() > 0 {
+            result.Success = false
+            result.ErrMsg = strings.TrimSpace(statusCol.Find(".alert-danger").Text())
+            results = append(results, result)
+            return
+        }
 
-		results = append(results, result)
-	})
+        // ───────────────────────────────────────────────────────────────
+        // UNKNOWN (should not happen)
+        // ───────────────────────────────────────────────────────────────
+        result.Success = false
+        result.ErrMsg = "no renewal status in response"
+        results = append(results, result)
+    })
 
-	return results, nil
+    return results, nil
 }
