@@ -8,7 +8,13 @@
       "PowerShell(wsl -e bash -lc \"cd ~/projects/finna-renewer && which go || ls /usr/local/go/bin/ 2>/dev/null || find /home -name 'go' -type f 2>/dev/null | head -5\")",
       "PowerShell(wsl -e bash -lc \"cd ~/projects/finna-renewer && PATH=/usr/local/go/bin:$PATH go build ./... 2>&1\")",
       "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git status\")",
-      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git checkout finna-renewer && git add .claude/ && git status\")"
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git checkout finna-renewer && git add .claude/ && git status\")",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git diff --name-only && git diff --cached --name-only\")",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && ls -la CLAUDE.md && git ls-files CLAUDE.md\")",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git commit -m \\\\\"chore: add local Claude settings for project context\\\\\"\")",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git push origin main && git log --oneline -3\")",
+      "Bash(wsl -e bash -lc 'cd ~/projects/finna-renewer && gh pr create --title '\\\\''Fix renewal cutoff logic and Discord display bugs, add project documentation'\\\\'' --body '\\\\'' *)",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && gh pr list --state all | head -20\")"
     ]
   }
 }
