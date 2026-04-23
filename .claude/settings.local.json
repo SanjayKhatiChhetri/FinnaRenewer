@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build *)",
+      "Bash(wsl go *)",
+      "Bash(wsl bash *)",
+      "PowerShell(wsl -e bash -lc \"cd ~/projects/finna-renewer && go build ./... 2>&1\")",
+      "PowerShell(wsl -e bash -lc \"cd ~/projects/finna-renewer && which go || ls /usr/local/go/bin/ 2>/dev/null || find /home -name 'go' -type f 2>/dev/null | head -5\")",
+      "PowerShell(wsl -e bash -lc \"cd ~/projects/finna-renewer && PATH=/usr/local/go/bin:$PATH go build ./... 2>&1\")",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git status\")",
+      "Bash(wsl -e bash -lc \"cd ~/projects/finna-renewer && git checkout finna-renewer && git add .claude/ && git status\")"
+    ]
+  }
+}
