@@ -44,7 +44,8 @@ func main() {
     // ───────────────────────────────────────────────────────────────
     // DETERMINE WHICH LOANS NEED RENEWAL
     // ───────────────────────────────────────────────────────────────
-    cutoff := time.Now().AddDate(0, 0, cfg.RenewDaysBefore)
+    now := time.Now()
+    cutoff := time.Date(now.Year(), now.Month(), now.Day()+cfg.RenewDaysBefore+1, 0, 0, 0, 0, now.Location())
     var toRenew []Loan
 
     for _, l := range loans {

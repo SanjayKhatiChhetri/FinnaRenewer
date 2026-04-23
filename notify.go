@@ -128,7 +128,7 @@ func buildRenewalEmbed(results []RenewalResult) discordEmbed {
 
 func buildUpcomingEmbed(loans []Loan, daysThreshold int) discordEmbed {
     now := time.Now()
-    cutoff := now.AddDate(0, 0, daysThreshold)
+    cutoff := time.Date(now.Year(), now.Month(), now.Day()+daysThreshold+1, 0, 0, 0, 0, now.Location())
 
     var sb strings.Builder
 
@@ -150,13 +150,13 @@ func buildUpcomingEmbed(loans []Loan, daysThreshold int) discordEmbed {
                 "• **Due:** %s\n"+
                 "• **Days left:** %d\n\n",
             truncate(l.Title, 80),
-            l.DueDate.Format("2.1.2006 23:59"),
+            l.DueDate.Format("2.1.2006 15:04"),
             l.DaysUntilDue(),
         ))
     }
 
     // Items needing renewal within threshold
-    sb.WriteString("### 🔥 Items needing renewal within 7 days\n")
+    sb.WriteString(fmt.Sprintf("### 🔥 Items needing renewal within %d days\n", daysThreshold))
 
     needRenew := false
     for _, l := range loans {
