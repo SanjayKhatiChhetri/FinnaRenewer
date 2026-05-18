@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="#e6e0f5"/>
+  <rect x="16" y="16" width="480" height="480" rx="80" fill="#5645d4"/>
+  <g transform="translate(128, 112)">
+    <!-- Book icon -->
+    <path d="M16 16C16 11.58 19.58 8 24 8H104C108.42 8 112 11.58 112 16V256C112 260.42 108.42 264 104 264H24C19.58 264 16 260.42 16 256V16Z" fill="white" opacity="0.9"/>
+    <path d="M144 16C144 11.58 147.58 8 152 8H232C236.42 8 240 11.58 240 16V256C240 260.42 236.42 264 232 264H152C147.58 264 144 260.42 144 256V16Z" fill="white" opacity="0.7"/>
+    <path d="M128 24V272" stroke="white" stroke-width="6" opacity="0.5"/>
+    <!-- Refresh arrow -->
+    <circle cx="192" cy="200" r="40" stroke="white" stroke-width="6" fill="none" stroke-dasharray="180 70"/>
+    <polygon points="232,190 232,210 220,200" fill="white"/>
+  </g>
+</svg>
