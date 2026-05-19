@@ -110,12 +110,8 @@ export async function finnaLogin(
     password,
     remember_me: "on",
     auth_method: authMethod,
-    processLogin: "Log in",
+    processLogin: "Login",
   });
-
-  if (instance.authTarget) {
-    formBody.set("target", instance.authTarget);
-  }
 
   const loginResp = await fetchWithRetry(loginPostUrl, {
     method: "POST",
