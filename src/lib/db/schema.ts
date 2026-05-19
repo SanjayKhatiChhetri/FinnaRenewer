@@ -82,7 +82,6 @@ export const libraryCredentials = pgTable("library_credentials", {
   encryptedPassword: text("encrypted_password").notNull(),
   iv: text("iv").notNull(),
   authTag: text("auth_tag").notNull(),
-  finnaCookie: text("finna_cookie"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
