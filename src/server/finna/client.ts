@@ -60,7 +60,7 @@ export async function fetchWithRetry(
       const resp = await fetch(url, {
         ...init,
         headers,
-        redirect: "follow",
+        redirect: init.redirect ?? "follow",
       });
 
       if (resp.status === 403 || resp.status === 503 || resp.status >= 500) {
@@ -82,17 +82,12 @@ export async function fetchWithRetry(
 export async function finnaLogin(
   username: string,
   password: string,
-  existingCookie?: string
 ): Promise<FinnaSession> {
-  const seedCookies = existingCookie ?? "";
-
-  const loginPageResp = await fetchWithRetry(LOGIN_PAGE_URL, {
-    cookies: seedCookies,
-  });
+  // Step 1: Load login page to get CSRF token and initial cookies (PHPSESSID etc.)
+  const loginPageResp = await fetchWithRetry(LOGIN_PAGE_URL);
 
   const loginHtml = await loginPageResp.text();
   const pageCookies = extractCookiesFromHeaders(loginPageResp.headers);
-  const allCookies = mergeCookies(seedCookies, pageCookies);
 
   const csrfMatch = loginHtml.match(
     /name="loginForm"[\s\S]*?name="csrf"\s+value="([^"]+)"/
@@ -101,6 +96,10 @@ export async function finnaLogin(
     throw new Error("CSRF not found in login form");
   }
 
+  // Step 2: POST credentials with redirect:"manual" to capture the session
+  // cookie from the 302 response. Node.js fetch with redirect:"follow" loses
+  // Set-Cookie headers from intermediate redirects — unlike Go's http.Client
+  // with a cookie jar, which preserves them automatically.
   const formBody = new URLSearchParams({
     username,
     password,
@@ -112,23 +111,29 @@ export async function finnaLogin(
 
   const loginResp = await fetchWithRetry(LOGIN_POST_URL, {
     method: "POST",
-    cookies: allCookies,
+    cookies: pageCookies,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Referer: LOGIN_PAGE_URL,
     },
     body: formBody.toString(),
+    redirect: "manual",
   });
 
   const postCookies = extractCookiesFromHeaders(loginResp.headers);
-  const sessionCookies = mergeCookies(allCookies, postCookies);
+  const sessionCookies = mergeCookies(pageCookies, postCookies);
 
-  const finalUrl = loginResp.url;
-  if (finalUrl.includes("/MyResearch/Login")) {
+  // With redirect:"manual", check the Location header for login failure
+  // (Finna redirects back to login page on bad credentials)
+  const location = loginResp.headers.get("Location") ?? "";
+  if (loginResp.status >= 300 && loginResp.status < 400) {
+    if (location.includes("/MyResearch/Login")) {
+      throw new Error("Login failed — check credentials");
+    }
+  } else {
+    // Non-redirect (200) means Finna re-rendered the login form (failure)
     throw new Error("Login failed — check credentials");
   }
-
-  await loginResp.text();
 
   return { cookies: sessionCookies };
 }

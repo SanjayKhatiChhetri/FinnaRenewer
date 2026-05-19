@@ -12,7 +12,6 @@ import { revalidatePath } from "next/cache";
 const linkSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
-  cookie: z.string().optional(),
 });
 
 export async function linkLibraryCredentials(formData: FormData) {
@@ -22,17 +21,16 @@ export async function linkLibraryCredentials(formData: FormData) {
   const parsed = linkSchema.safeParse({
     username: formData.get("username"),
     password: formData.get("password"),
-    cookie: formData.get("cookie") || undefined,
   });
 
   if (!parsed.success) {
     return { error: "Username and password are required." };
   }
 
-  const { username, password, cookie } = parsed.data;
+  const { username, password } = parsed.data;
 
   try {
-    await finnaLogin(username, password, cookie);
+    await finnaLogin(username, password);
   } catch {
     return { error: "Could not log in to Finna. Check your credentials." };
   }
@@ -47,7 +45,6 @@ export async function linkLibraryCredentials(formData: FormData) {
       encryptedPassword: encrypted,
       iv,
       authTag,
-      finnaCookie: cookie ?? null,
     })
     .onConflictDoUpdate({
       target: libraryCredentials.userId,
@@ -56,7 +53,6 @@ export async function linkLibraryCredentials(formData: FormData) {
         encryptedPassword: encrypted,
         iv,
         authTag,
-        finnaCookie: cookie ?? null,
         updatedAt: new Date(),
       },
     });

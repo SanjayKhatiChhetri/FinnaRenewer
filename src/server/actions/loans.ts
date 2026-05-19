@@ -27,11 +27,7 @@ export async function fetchUserLoans(): Promise<{
 
   try {
     const password = decrypt(creds.encryptedPassword, creds.iv, creds.authTag);
-    const finnaSession = await finnaLogin(
-      creds.finnaUsername,
-      password,
-      creds.finnaCookie ?? undefined
-    );
+    const finnaSession = await finnaLogin(creds.finnaUsername, password);
     const { loans } = await fetchLoans(finnaSession);
     return { loans };
   } catch (err) {

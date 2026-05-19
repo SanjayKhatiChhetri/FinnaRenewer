@@ -98,3 +98,16 @@ This is intentional and tested. Do not simplify to `Date.now() + days * 86400000
 **Symptom**: Due dates parse as Invalid Date.
 **Cause**: Finna returns dates like `18.5.2026 14.30` (dot separator in time, not colon).
 **Fix**: The regex in `loans.ts` handles this: `/(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})/`. Do not "fix" the time separator to colons without testing against real Finna HTML.
+
+### Node.js fetch loses cookies on redirects (SESSION_EXPIRED)
+**Symptom**: Library card shows "Connected" but all operations fail with `SESSION_EXPIRED`.
+**Cause**: `fetch()` with `redirect: "follow"` does NOT preserve `Set-Cookie` headers from intermediate 302 responses. Finna's login POST responds with a 302 that carries the session cookie — that cookie is silently lost. Go's `http.Client` with a cookie jar preserves these automatically, which is why the Go version worked.
+**Fix**: Use `redirect: "manual"` for the login POST, extract cookies from the 302 response's `Set-Cookie` header, then check the `Location` header for success/failure. Do not follow the redirect — we only need the cookies.
+```typescript
+// WRONG — loses session cookie from 302
+const resp = await fetch(url, { redirect: "follow" });
+
+// RIGHT — captures session cookie
+const resp = await fetch(url, { redirect: "manual" });
+const cookies = extractCookiesFromHeaders(resp.headers);
+```

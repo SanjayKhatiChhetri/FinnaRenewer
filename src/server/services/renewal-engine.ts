@@ -42,11 +42,7 @@ export async function runRenewalForUser(
 
   try {
     const password = decrypt(creds.encryptedPassword, creds.iv, creds.authTag);
-    const session = await finnaLogin(
-      creds.finnaUsername,
-      password,
-      creds.finnaCookie ?? undefined
-    );
+    const session = await finnaLogin(creds.finnaUsername, password);
 
     const { loans, csrf } = await fetchLoans(session);
 
