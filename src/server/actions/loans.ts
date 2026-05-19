@@ -8,7 +8,7 @@ import { decrypt } from "@/server/services/encryption";
 import { finnaLogin } from "@/server/finna/client";
 import { fetchLoans } from "@/server/finna/loans";
 import { runRenewalForUser } from "@/server/services/renewal-engine";
-import type { Loan } from "@/server/finna/types";
+import type { Loan, FinnaInstanceId } from "@/server/finna/types";
 
 export async function fetchUserLoans(): Promise<{
   loans?: Loan[];
@@ -27,7 +27,11 @@ export async function fetchUserLoans(): Promise<{
 
   try {
     const password = decrypt(creds.encryptedPassword, creds.iv, creds.authTag);
-    const finnaSession = await finnaLogin(creds.finnaUsername, password);
+    const finnaSession = await finnaLogin(
+      creds.finnaUsername,
+      password,
+      creds.finnaInstance as FinnaInstanceId,
+    );
     const { loans } = await fetchLoans(finnaSession);
     return { loans };
   } catch (err) {

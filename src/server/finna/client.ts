@@ -1,17 +1,12 @@
-import type { FinnaSession } from "./types";
-
-const FINNA_BASE_URL = "https://oula.finna.fi";
-const LOGIN_PAGE_URL = `${FINNA_BASE_URL}/MyResearch/Login?auth_method=Database`;
-const LOGIN_POST_URL = `${FINNA_BASE_URL}/MyResearch/Home`;
-
-export { FINNA_BASE_URL };
+import * as cheerio from "cheerio";
+import type { FinnaSession, FinnaInstanceId } from "./types";
+import { getFinnaInstance, DEFAULT_INSTANCE } from "./instances";
 
 const BASE_HEADERS: Record<string, string> = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
-  Origin: FINNA_BASE_URL,
 };
 
 const BACKOFF_MS = [500, 1000, 2000, 4000];
@@ -82,39 +77,50 @@ export async function fetchWithRetry(
 export async function finnaLogin(
   username: string,
   password: string,
+  instanceId: FinnaInstanceId = DEFAULT_INSTANCE,
 ): Promise<FinnaSession> {
-  // Step 1: Load login page to get CSRF token and initial cookies (PHPSESSID etc.)
-  const loginPageResp = await fetchWithRetry(LOGIN_PAGE_URL);
+  const { baseUrl } = getFinnaInstance(instanceId);
+  const loginPageUrl = `${baseUrl}/MyResearch/Login`;
+  const loginPostUrl = `${baseUrl}/MyResearch/Home`;
 
+  // Step 1: Load login page to get CSRF token, auth_method, and other hidden fields
+  const loginPageResp = await fetchWithRetry(loginPageUrl);
   const loginHtml = await loginPageResp.text();
   const pageCookies = extractCookiesFromHeaders(loginPageResp.headers);
 
-  const csrfMatch = loginHtml.match(
-    /name="loginForm"[\s\S]*?name="csrf"\s+value="([^"]+)"/
-  );
-  if (!csrfMatch) {
+  // Step 2: Parse the login form dynamically — different Finna instances use
+  // different auth methods (Database, MultiILS) and hidden fields (target, etc.)
+  const $ = cheerio.load(loginHtml);
+  const hiddenFields: Record<string, string> = {};
+  $('form[name="loginForm"] input[type="hidden"]').each((_, el) => {
+    const name = $(el).attr("name");
+    const value = $(el).attr("value");
+    if (name && value) hiddenFields[name] = value;
+  });
+
+  if (!hiddenFields.csrf) {
     throw new Error("CSRF not found in login form");
   }
 
-  // Step 2: POST credentials with redirect:"manual" to capture the session
+  // Step 3: POST credentials with redirect:"manual" to capture the session
   // cookie from the 302 response. Node.js fetch with redirect:"follow" loses
   // Set-Cookie headers from intermediate redirects — unlike Go's http.Client
   // with a cookie jar, which preserves them automatically.
   const formBody = new URLSearchParams({
+    ...hiddenFields,
     username,
     password,
     remember_me: "on",
-    auth_method: "Database",
-    csrf: csrfMatch[1],
     processLogin: "Log in",
   });
 
-  const loginResp = await fetchWithRetry(LOGIN_POST_URL, {
+  const loginResp = await fetchWithRetry(loginPostUrl, {
     method: "POST",
     cookies: pageCookies,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Referer: LOGIN_PAGE_URL,
+      Referer: loginPageUrl,
+      Origin: baseUrl,
     },
     body: formBody.toString(),
     redirect: "manual",
@@ -135,5 +141,5 @@ export async function finnaLogin(
     throw new Error("Login failed — check credentials");
   }
 
-  return { cookies: sessionCookies };
+  return { cookies: sessionCookies, baseUrl };
 }

@@ -1,23 +1,22 @@
 import * as cheerio from "cheerio";
 import type { Loan, RenewalResult, FinnaSession } from "./types";
-import { FINNA_BASE_URL, fetchWithRetry } from "./client";
+import { fetchWithRetry } from "./client";
 import { parseDueDate } from "./loans";
-
-const CHECKED_OUT_URL = `${FINNA_BASE_URL}/MyResearch/CheckedOut`;
 
 export async function renewAll(
   session: FinnaSession,
   csrf: string,
   loans: Loan[]
 ): Promise<RenewalResult[]> {
+  const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut`;
   const body = buildRenewalForm(csrf, loans);
 
-  const resp = await fetchWithRetry(CHECKED_OUT_URL, {
+  const resp = await fetchWithRetry(checkedOutUrl, {
     method: "POST",
     cookies: session.cookies,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Referer: CHECKED_OUT_URL,
+      Referer: checkedOutUrl,
     },
     body,
   });

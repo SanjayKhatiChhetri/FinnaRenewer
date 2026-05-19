@@ -18,4 +18,13 @@ export interface CheckoutPageData {
 
 export interface FinnaSession {
   cookies: string;
+  baseUrl: string;
 }
+
+export interface FinnaInstance {
+  id: string;
+  name: string;
+  baseUrl: string;
+}
+
+export type FinnaInstanceId = "outi" | "oula";

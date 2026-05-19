@@ -6,10 +6,13 @@ import { libraryCredentials } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { encrypt } from "@/server/services/encryption";
 import { finnaLogin } from "@/server/finna/client";
+import { isValidInstanceId } from "@/server/finna/instances";
+import type { FinnaInstanceId } from "@/server/finna/types";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
 const linkSchema = z.object({
+  instance: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
 });
@@ -19,18 +22,23 @@ export async function linkLibraryCredentials(formData: FormData) {
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   const parsed = linkSchema.safeParse({
+    instance: formData.get("instance"),
     username: formData.get("username"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: "Username and password are required." };
+    return { error: "Library, username, and password are required." };
   }
 
-  const { username, password } = parsed.data;
+  const { instance, username, password } = parsed.data;
+
+  if (!isValidInstanceId(instance)) {
+    return { error: "Invalid library selection." };
+  }
 
   try {
-    await finnaLogin(username, password);
+    await finnaLogin(username, password, instance as FinnaInstanceId);
   } catch {
     return { error: "Could not log in to Finna. Check your credentials." };
   }
@@ -41,6 +49,7 @@ export async function linkLibraryCredentials(formData: FormData) {
     .insert(libraryCredentials)
     .values({
       userId: session.user.id,
+      finnaInstance: instance,
       finnaUsername: username,
       encryptedPassword: encrypted,
       iv,
@@ -49,6 +58,7 @@ export async function linkLibraryCredentials(formData: FormData) {
     .onConflictDoUpdate({
       target: libraryCredentials.userId,
       set: {
+        finnaInstance: instance,
         finnaUsername: username,
         encryptedPassword: encrypted,
         iv,
@@ -80,10 +90,14 @@ export async function getLinkedStatus() {
   if (!session?.user?.id) return { linked: false };
 
   const [creds] = await db
-    .select({ id: libraryCredentials.id, username: libraryCredentials.finnaUsername })
+    .select({
+      id: libraryCredentials.id,
+      username: libraryCredentials.finnaUsername,
+      instance: libraryCredentials.finnaInstance,
+    })
     .from(libraryCredentials)
     .where(eq(libraryCredentials.userId, session.user.id))
     .limit(1);
 
-  return { linked: !!creds, username: creds?.username };
+  return { linked: !!creds, username: creds?.username, instance: creds?.instance };
 }

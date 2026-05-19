@@ -5,6 +5,7 @@ import { decrypt } from "./encryption";
 import { finnaLogin } from "@/server/finna/client";
 import { fetchLoans } from "@/server/finna/loans";
 import { renewAll } from "@/server/finna/renew";
+import type { FinnaInstanceId } from "@/server/finna/types";
 import {
   sendDiscordWebhook,
   buildRenewalEmbed,
@@ -42,7 +43,11 @@ export async function runRenewalForUser(
 
   try {
     const password = decrypt(creds.encryptedPassword, creds.iv, creds.authTag);
-    const session = await finnaLogin(creds.finnaUsername, password);
+    const session = await finnaLogin(
+      creds.finnaUsername,
+      password,
+      creds.finnaInstance as FinnaInstanceId,
+    );
 
     const { loans, csrf } = await fetchLoans(session);
 

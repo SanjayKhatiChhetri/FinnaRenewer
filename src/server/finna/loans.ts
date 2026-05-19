@@ -1,14 +1,14 @@
 import * as cheerio from "cheerio";
 import type { Loan, CheckoutPageData, FinnaSession } from "./types";
-import { FINNA_BASE_URL, fetchWithRetry } from "./client";
+import { fetchWithRetry } from "./client";
 
-const CHECKED_OUT_URL = `${FINNA_BASE_URL}/MyResearch/CheckedOut`;
 const DUE_DATE_REGEX = /(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})/;
 
 export async function fetchLoans(session: FinnaSession): Promise<CheckoutPageData> {
-  const resp = await fetchWithRetry(CHECKED_OUT_URL, {
+  const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut`;
+  const resp = await fetchWithRetry(checkedOutUrl, {
     cookies: session.cookies,
-    headers: { Referer: FINNA_BASE_URL },
+    headers: { Referer: session.baseUrl },
   });
 
   if (resp.url.includes("/MyResearch/Login")) {

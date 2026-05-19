@@ -77,6 +77,7 @@ export const libraryCredentials = pgTable("library_credentials", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" })
     .unique(),
+  finnaInstance: text("finna_instance").default("outi").notNull(),
   finnaUsername: text("finna_username").notNull(),
   encryptedPassword: text("encrypted_password").notNull(),
   iv: text("iv").notNull(),

@@ -25,13 +25,20 @@ interface Settings {
   notificationsEnabled: boolean;
 }
 
+const FINNA_LIBRARIES = [
+  { id: "outi", name: "OUTI-kirjastot" },
+  { id: "oula", name: "Oulun kaupunginkirjasto" },
+];
+
 export function SettingsContent({
   linked,
   finnaUsername,
+  finnaInstance,
   settings,
 }: {
   linked: boolean;
   finnaUsername?: string;
+  finnaInstance?: string;
   settings: Settings | null;
 }) {
   return (
@@ -44,7 +51,7 @@ export function SettingsContent({
       </p>
 
       <div className="space-y-6">
-        <LibraryCredentialsSection linked={linked} username={finnaUsername} />
+        <LibraryCredentialsSection linked={linked} username={finnaUsername} instance={finnaInstance} />
         <NotificationSection settings={settings} />
         <PreferencesSection settings={settings} />
       </div>
@@ -55,12 +62,16 @@ export function SettingsContent({
 function LibraryCredentialsSection({
   linked,
   username,
+  instance,
 }: {
   linked: boolean;
   username?: string;
+  instance?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const libraryName = FINNA_LIBRARIES.find((l) => l.id === instance)?.name;
 
   function handleLink(formData: FormData) {
     startTransition(async () => {
@@ -92,7 +103,7 @@ function LibraryCredentialsSection({
             </div>
             <div>
               <CardTitle className="text-heading-3">Library Card</CardTitle>
-              <CardDescription>Your Oulu Finna credentials</CardDescription>
+              <CardDescription>Your Finna library credentials</CardDescription>
             </div>
           </div>
           {linked && <Badge variant="success">Connected</Badge>}
@@ -101,6 +112,14 @@ function LibraryCredentialsSection({
       <CardContent>
         {linked ? (
           <div className="space-y-4">
+            {libraryName && (
+              <div className="flex items-center justify-between rounded-md bg-surface px-4 py-3">
+                <div>
+                  <p className="text-micro text-steel uppercase tracking-wider">Library</p>
+                  <p className="text-body-sm font-medium text-charcoal">{libraryName}</p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between rounded-md bg-surface px-4 py-3">
               <div>
                 <p className="text-micro text-steel uppercase tracking-wider">Username</p>
@@ -122,23 +141,35 @@ function LibraryCredentialsSection({
           </div>
         ) : (
           <form action={handleLink} className="space-y-4">
+            <div>
+              <label className="block text-body-sm font-medium text-charcoal mb-1.5">
+                Library
+              </label>
+              <select
+                name="instance"
+                required
+                defaultValue="outi"
+                className="w-full h-11 rounded-md border border-hairline-soft bg-canvas px-3 text-body-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              >
+                {FINNA_LIBRARIES.map((lib) => (
+                  <option key={lib.id} value={lib.id}>
+                    {lib.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Input
-              label="Finna Username"
+              label="Library Card ID"
               name="username"
-              placeholder="Your library card ID"
+              placeholder="e.g. OUTI0005542"
               required
             />
             <Input
-              label="Finna Password"
+              label="PIN Code"
               name="password"
               type="password"
-              placeholder="••••••••"
+              placeholder="4-digit PIN"
               required
-            />
-            <Input
-              label="Browser Cookie (optional)"
-              name="cookie"
-              placeholder="Paste from DevTools for Cloudflare bypass"
             />
             <Button type="submit" size="sm" disabled={isPending}>
               {isPending ? (
