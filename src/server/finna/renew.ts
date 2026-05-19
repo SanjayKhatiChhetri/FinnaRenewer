@@ -21,7 +21,7 @@ export async function renewAll(
     body,
   });
 
-  if (resp.url.includes("/MyResearch/Login")) {
+  if (resp.url.includes("/MyResearch/Login") || resp.url.includes("/MyResearch/UserLogin")) {
     throw new Error("SESSION_EXPIRED");
   }
 

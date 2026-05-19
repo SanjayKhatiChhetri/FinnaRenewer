@@ -5,11 +5,14 @@ export const FINNA_INSTANCES: Record<FinnaInstanceId, FinnaInstance> = {
     id: "outi",
     name: "OUTI-kirjastot",
     baseUrl: "https://outi.finna.fi",
+    authMethod: "MultiILS",
+    authTarget: "oy",
   },
   oula: {
     id: "oula",
     name: "Oulun kaupunginkirjasto",
     baseUrl: "https://oula.finna.fi",
+    authMethod: "Database",
   },
 };
 

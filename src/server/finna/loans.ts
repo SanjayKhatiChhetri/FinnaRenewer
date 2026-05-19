@@ -11,7 +11,7 @@ export async function fetchLoans(session: FinnaSession): Promise<CheckoutPageDat
     headers: { Referer: session.baseUrl },
   });
 
-  if (resp.url.includes("/MyResearch/Login")) {
+  if (resp.url.includes("/MyResearch/Login") || resp.url.includes("/MyResearch/UserLogin")) {
     throw new Error("SESSION_EXPIRED");
   }
 

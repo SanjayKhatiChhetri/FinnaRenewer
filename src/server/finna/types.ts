@@ -25,6 +25,8 @@ export interface FinnaInstance {
   id: string;
   name: string;
   baseUrl: string;
+  authMethod: "Database" | "MultiILS";
+  authTarget?: string; // Required for MultiILS (e.g., "oy" for Oulu)
 }
 
 export type FinnaInstanceId = "outi" | "oula";

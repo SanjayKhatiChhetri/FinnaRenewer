@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import type { FinnaSession, FinnaInstanceId } from "./types";
+import type { FinnaSession, FinnaInstance, FinnaInstanceId } from "./types";
 import { getFinnaInstance, DEFAULT_INSTANCE } from "./instances";
 
 const BASE_HEADERS: Record<string, string> = {
@@ -79,24 +79,23 @@ export async function finnaLogin(
   password: string,
   instanceId: FinnaInstanceId = DEFAULT_INSTANCE,
 ): Promise<FinnaSession> {
-  const { baseUrl } = getFinnaInstance(instanceId);
-  const loginPageUrl = `${baseUrl}/MyResearch/Login`;
+  const instance = getFinnaInstance(instanceId);
+  const { baseUrl, authMethod } = instance;
+
+  // Append ?auth_method= to pre-select the correct login tab — matches the
+  // pattern from the working Go implementation and avoids multi-form ambiguity
+  const loginPageUrl = `${baseUrl}/MyResearch/Login?auth_method=${authMethod}`;
   const loginPostUrl = `${baseUrl}/MyResearch/Home`;
 
-  // Step 1: Load login page to get CSRF token, auth_method, and other hidden fields
+  // Step 1: Load login page to get CSRF token and hidden fields
   const loginPageResp = await fetchWithRetry(loginPageUrl);
   const loginHtml = await loginPageResp.text();
   const pageCookies = extractCookiesFromHeaders(loginPageResp.headers);
 
-  // Step 2: Parse the login form dynamically — different Finna instances use
-  // different auth methods (Database, MultiILS) and hidden fields (target, etc.)
-  const $ = cheerio.load(loginHtml);
-  const hiddenFields: Record<string, string> = {};
-  $('form[name="loginForm"] input[type="hidden"]').each((_, el) => {
-    const name = $(el).attr("name");
-    const value = $(el).attr("value");
-    if (name && value) hiddenFields[name] = value;
-  });
+  // Step 2: Find the form matching this instance's auth method. Some Finna pages
+  // show multiple login tabs (Shibboleth, Database, MultiILS) as separate forms
+  // all named "loginForm" — selecting by auth_method value is deterministic.
+  const hiddenFields = extractFormFields(loginHtml, instance);
 
   if (!hiddenFields.csrf) {
     throw new Error("CSRF not found in login form");
@@ -104,15 +103,19 @@ export async function finnaLogin(
 
   // Step 3: POST credentials with redirect:"manual" to capture the session
   // cookie from the 302 response. Node.js fetch with redirect:"follow" loses
-  // Set-Cookie headers from intermediate redirects — unlike Go's http.Client
-  // with a cookie jar, which preserves them automatically.
+  // Set-Cookie headers from intermediate redirects.
   const formBody = new URLSearchParams({
     ...hiddenFields,
     username,
     password,
     remember_me: "on",
+    auth_method: authMethod,
     processLogin: "Log in",
   });
+
+  if (instance.authTarget) {
+    formBody.set("target", instance.authTarget);
+  }
 
   const loginResp = await fetchWithRetry(loginPostUrl, {
     method: "POST",
@@ -129,17 +132,50 @@ export async function finnaLogin(
   const postCookies = extractCookiesFromHeaders(loginResp.headers);
   const sessionCookies = mergeCookies(pageCookies, postCookies);
 
-  // With redirect:"manual", check the Location header for login failure
-  // (Finna redirects back to login page on bad credentials)
+  // With redirect:"manual", check the Location header for login failure.
+  // Finna redirects back to /MyResearch/Login or /MyResearch/UserLogin on
+  // bad credentials; a successful login redirects elsewhere (e.g., /MyResearch/Home).
   const location = loginResp.headers.get("Location") ?? "";
   if (loginResp.status >= 300 && loginResp.status < 400) {
-    if (location.includes("/MyResearch/Login")) {
+    if (isLoginRedirect(location)) {
       throw new Error("Login failed — check credentials");
     }
   } else {
-    // Non-redirect (200) means Finna re-rendered the login form (failure)
     throw new Error("Login failed — check credentials");
   }
 
   return { cookies: sessionCookies, baseUrl };
+}
+
+function extractFormFields(
+  html: string,
+  instance: FinnaInstance,
+): Record<string, string> {
+  const $ = cheerio.load(html);
+
+  // Find the specific form whose auth_method matches the instance config
+  let targetForm = $('form[name="loginForm"]').filter((_, form) => {
+    return $(form).find(
+      `input[name="auth_method"][value="${instance.authMethod}"]`,
+    ).length > 0;
+  }).first();
+
+  // Fall back to first loginForm (single-form pages)
+  if (targetForm.length === 0) {
+    targetForm = $('form[name="loginForm"]').first();
+  }
+
+  const fields: Record<string, string> = {};
+  targetForm.find('input[type="hidden"]').each((_, el) => {
+    const name = $(el).attr("name");
+    const value = $(el).attr("value");
+    if (name && value) fields[name] = value;
+  });
+
+  return fields;
+}
+
+function isLoginRedirect(location: string): boolean {
+  return location.includes("/MyResearch/Login")
+    || location.includes("/MyResearch/UserLogin");
 }
