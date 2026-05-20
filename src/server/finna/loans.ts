@@ -3,44 +3,40 @@ import type { Loan, CheckoutPageData, FinnaSession } from "./types";
 import { fetchWithRetry } from "./client";
 
 // Matches "Due date: 1.6.2026" or "Due date: 1.6.2026 15.00"
-// OUTI (VuFind 9.x) omits the time; OULA includes it.
+// Pages are forced to English via ?lng=en, so this label is stable.
 const DUE_DATE_LABELED = /Due date:\s*(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{2}\.\d{2}))?/i;
-// Fallback for older Finna instances that embed just a raw date+time in status text
+// Fallback for pages that embed just a raw date+time in status text
 const DUE_DATE_WITH_TIME = /(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})/;
 
 export async function fetchLoans(session: FinnaSession): Promise<CheckoutPageData> {
-  // VuFind 9.x instances (e.g. OUTI) render /MyResearch/CheckedOut client-side —
-  // the CSRF token and loan rows are absent from the initial HTTP response.
-  // The same loan table is available server-side on /MyResearch/Home.
-  // Try CheckedOut first (works for older instances like OULA); fall back to Home.
-  for (const path of ["/MyResearch/CheckedOut", "/MyResearch/Home"] as const) {
-    const url = `${session.baseUrl}${path}`;
-    const resp = await fetchWithRetry(url, {
-      cookies: session.cookies,
-      headers: { Referer: session.baseUrl },
-    });
+  // Force English with ?lng=en so date labels ("Due date:") are predictable
+  // regardless of the Finna instance's default language.
+  const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut?lng=en`;
+  const resp = await fetchWithRetry(checkedOutUrl, {
+    cookies: session.cookies,
+    headers: { Referer: session.baseUrl },
+  });
 
-    if (resp.url.includes("/MyResearch/Login") || resp.url.includes("/MyResearch/UserLogin")) {
-      throw new Error("SESSION_EXPIRED");
-    }
-    if (resp.status !== 200) {
-      throw new Error(`Unexpected HTTP ${resp.status} from ${path}`);
-    }
-
-    const html = await resp.text();
-    const $ = cheerio.load(html);
-
-    if ($('form[name="loginForm"]').length > 0) {
-      throw new Error("SESSION_EXPIRED");
-    }
-
-    const csrf = $('form#renewals input[name="csrf"]').first().attr("value");
-    if (!csrf) continue; // renewal form absent on this page — try next URL
-
-    return { loans: extractLoans($), csrf, renewalUrl: url };
+  if (resp.url.includes("/MyResearch/Login") || resp.url.includes("/MyResearch/UserLogin")) {
+    throw new Error("SESSION_EXPIRED");
+  }
+  if (resp.status !== 200) {
+    throw new Error(`Unexpected HTTP ${resp.status} from CheckedOut`);
   }
 
-  throw new Error("Could not find renewal form — session may have expired");
+  const html = await resp.text();
+  const $ = cheerio.load(html);
+
+  if ($('form[name="loginForm"]').length > 0) {
+    throw new Error("SESSION_EXPIRED");
+  }
+
+  const csrf = $('form#renewals input[name="csrf"]').first().attr("value");
+  if (!csrf) {
+    throw new Error("Could not find renewal form — session may have expired");
+  }
+
+  return { loans: extractLoans($), csrf, renewalUrl: checkedOutUrl };
 }
 
 export function parseCheckoutPage(html: string, renewalUrl = ""): CheckoutPageData {
