@@ -6,17 +6,17 @@ import { parseDueDate } from "./loans";
 export async function renewAll(
   session: FinnaSession,
   csrf: string,
-  loans: Loan[]
+  loans: Loan[],
+  renewalUrl: string,
 ): Promise<RenewalResult[]> {
-  const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut`;
   const body = buildRenewalForm(csrf, loans);
 
-  const resp = await fetchWithRetry(checkedOutUrl, {
+  const resp = await fetchWithRetry(renewalUrl, {
     method: "POST",
     cookies: session.cookies,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Referer: checkedOutUrl,
+      Referer: renewalUrl,
     },
     body,
   });

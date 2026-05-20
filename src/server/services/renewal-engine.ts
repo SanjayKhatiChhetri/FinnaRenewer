@@ -49,7 +49,7 @@ export async function runRenewalForUser(
       creds.finnaInstance as FinnaInstanceId,
     );
 
-    const { loans, csrf } = await fetchLoans(session);
+    const { loans, csrf, renewalUrl } = await fetchLoans(session);
 
     const now = new Date();
     const cutoff = new Date(
@@ -81,7 +81,7 @@ export async function runRenewalForUser(
       return { status: "nothing", message: `No loans due within ${renewDaysBefore} days` };
     }
 
-    const results = await renewAll(session, csrf, loans);
+    const results = await renewAll(session, csrf, loans, renewalUrl);
 
     const renewed = results.filter((r) => r.success).length;
     const failed = results.filter((r) => !r.success).length;

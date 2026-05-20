@@ -14,6 +14,7 @@ export interface RenewalResult {
 export interface CheckoutPageData {
   loans: Loan[];
   csrf: string;
+  renewalUrl: string;
 }
 
 export interface FinnaSession {

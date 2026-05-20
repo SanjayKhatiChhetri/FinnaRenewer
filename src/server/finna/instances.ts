@@ -3,13 +3,13 @@ import type { FinnaInstance, FinnaInstanceId } from "./types";
 export const FINNA_INSTANCES: Record<FinnaInstanceId, FinnaInstance> = {
   outi: {
     id: "outi",
-    name: "OUTI-kirjastot",
+    name: "Oulu City - OUTI",
     baseUrl: "https://outi.finna.fi",
     authMethod: "MultiILS",
   },
   oula: {
     id: "oula",
-    name: "Oulun kaupunginkirjasto",
+    name: "Oulu Uni - OULA",
     baseUrl: "https://oula.finna.fi",
     authMethod: "Database",
   },
