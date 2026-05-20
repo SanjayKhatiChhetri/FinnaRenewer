@@ -26,8 +26,8 @@ interface Settings {
 }
 
 const FINNA_LIBRARIES = [
-  { id: "outi", name: "OUTI-kirjastot" },
-  { id: "oula", name: "Oulun kaupunginkirjasto" },
+  { id: "outi", name: "Oulu City - OUTI" },
+  { id: "oula", name: "Oulu Uni - OULA" },
 ];
 
 export function SettingsContent({
