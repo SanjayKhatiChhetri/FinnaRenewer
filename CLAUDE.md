@@ -1,5 +1,9 @@
 # Finna Renewer
 
+## Working conventions
+
+- **Always work directly on `main`** — never create worktrees or feature branches. Commit directly to main and push.
+
 Multi-user web app that auto-renews Oulu Finna library loans. Users register, link encrypted Finna credentials, and loans due within N days get renewed weekly via Vercel Cron.
 
 ## Stack
