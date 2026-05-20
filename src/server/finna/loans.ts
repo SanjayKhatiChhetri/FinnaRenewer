@@ -2,16 +2,15 @@ import * as cheerio from "cheerio";
 import type { Loan, CheckoutPageData, FinnaSession } from "./types";
 import { fetchWithRetry } from "./client";
 
-// Matches "Due date: 1.6.2026" or "Due date: 1.6.2026 15.00"
-// Pages are forced to English via ?lng=en, so this label is stable.
-const DUE_DATE_LABELED = /Due date:\s*(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{2}\.\d{2}))?/i;
+// Matches due date in all three Finna UI languages:
+//   English: "Due date: 1.6.2026"   Finnish: "Eräpäivä: 1.6.2026"   Swedish: "Förfallodag: 1.6.2026"
+// Optional time component (some instances include "15.00" after the date).
+const DUE_DATE_LABELED = /(?:Due date|Eräpäivä|Förfallodag):\s*(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{2}\.\d{2}))?/i;
 // Fallback for pages that embed just a raw date+time in status text
 const DUE_DATE_WITH_TIME = /(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})/;
 
 export async function fetchLoans(session: FinnaSession): Promise<CheckoutPageData> {
-  // Force English with ?lng=en so date labels ("Due date:") are predictable
-  // regardless of the Finna instance's default language.
-  const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut?lng=en`;
+  const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut`;
   const resp = await fetchWithRetry(checkedOutUrl, {
     cookies: session.cookies,
     headers: { Referer: session.baseUrl },
