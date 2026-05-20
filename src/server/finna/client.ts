@@ -110,7 +110,6 @@ export async function finnaLogin(
     password,
     remember_me: "on",
     auth_method: authMethod,
-    processLogin: "Login",
   });
 
   const loginResp = await fetchWithRetry(loginPostUrl, {
@@ -128,12 +127,17 @@ export async function finnaLogin(
   const postCookies = extractCookiesFromHeaders(loginResp.headers);
   const sessionCookies = mergeCookies(pageCookies, postCookies);
 
-  // With redirect:"manual", check the Location header for login failure.
-  // Finna redirects back to /MyResearch/Login or /MyResearch/UserLogin on
-  // bad credentials; a successful login redirects elsewhere (e.g., /MyResearch/Home).
-  const location = loginResp.headers.get("Location") ?? "";
+  // Finna login response varies by instance:
+  //   - Some return 302 → /MyResearch/Home on success, 302 → /MyResearch/Login on failure
+  //   - Some return 200 directly (home page rendered inline) on success
+  // The reliable success signal is the loginToken cookie set on the POST response.
   if (loginResp.status >= 300 && loginResp.status < 400) {
+    const location = loginResp.headers.get("Location") ?? "";
     if (isLoginRedirect(location)) {
+      throw new Error("Login failed — check credentials");
+    }
+  } else if (loginResp.status === 200) {
+    if (!postCookies.includes("loginToken")) {
       throw new Error("Login failed — check credentials");
     }
   } else {
@@ -162,7 +166,8 @@ function extractFormFields(
   }
 
   const fields: Record<string, string> = {};
-  targetForm.find('input[type="hidden"]').each((_, el) => {
+  // Include submit buttons so processLogin is captured in the page's language
+  targetForm.find('input[type="hidden"], input[type="submit"]').each((_, el) => {
     const name = $(el).attr("name");
     const value = $(el).attr("value");
     if (name && value) fields[name] = value;
