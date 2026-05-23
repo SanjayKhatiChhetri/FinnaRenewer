@@ -3,6 +3,30 @@ import type { Loan, RenewalResult, FinnaSession } from "./types";
 import { fetchWithRetry } from "./client";
 import { parseDueDate } from "./loans";
 
+export async function renewSelected(
+  session: FinnaSession,
+  csrf: string,
+  loanIds: string[],
+  allLoans: Loan[],
+  renewalUrl: string,
+): Promise<RenewalResult[]> {
+  const selected = allLoans.filter((l) => loanIds.includes(l.id));
+  if (selected.length === 0) return [];
+
+  const params = new URLSearchParams();
+  params.set("csrf", csrf);
+  for (const loan of selected) {
+    params.append("renewSelectedIDS[]", loan.id);
+  }
+  // Include all IDs in selectAllIDS/renewAllIDS (Finna expects them)
+  for (const loan of allLoans) {
+    params.append("selectAllIDS[]", loan.id);
+    params.append("renewAllIDS[]", loan.id);
+  }
+
+  return postRenewal(session, params.toString(), selected, renewalUrl);
+}
+
 export async function renewAll(
   session: FinnaSession,
   csrf: string,
@@ -10,7 +34,15 @@ export async function renewAll(
   renewalUrl: string,
 ): Promise<RenewalResult[]> {
   const body = buildRenewalForm(csrf, loans);
+  return postRenewal(session, body, loans, renewalUrl);
+}
 
+async function postRenewal(
+  session: FinnaSession,
+  body: string,
+  loans: Loan[],
+  renewalUrl: string,
+): Promise<RenewalResult[]> {
   const resp = await fetchWithRetry(renewalUrl, {
     method: "POST",
     cookies: session.cookies,
@@ -21,7 +53,10 @@ export async function renewAll(
     body,
   });
 
-  if (resp.url.includes("/MyResearch/Login") || resp.url.includes("/MyResearch/UserLogin")) {
+  if (
+    resp.url.includes("/MyResearch/Login") ||
+    resp.url.includes("/MyResearch/UserLogin")
+  ) {
     throw new Error("SESSION_EXPIRED");
   }
 

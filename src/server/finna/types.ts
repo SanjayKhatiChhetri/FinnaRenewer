@@ -2,6 +2,13 @@ export interface Loan {
   id: string;
   title: string;
   dueDate: Date;
+  coverUrl?: string;
+  author?: string;
+  year?: string;
+  barcode?: string;
+  checkedOutDate?: Date;
+  branch?: string;
+  itemType?: string;
 }
 
 export interface RenewalResult {

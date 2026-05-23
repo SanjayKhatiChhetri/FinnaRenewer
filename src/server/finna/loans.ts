@@ -10,6 +10,14 @@ const DUE_DATE_LABELED =
 // Fallback for pages that embed just a raw date+time in status text
 const DUE_DATE_WITH_TIME = /(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})/;
 
+// Matches checked-out date: "Lainattu: 8.10.2021" or "Checked out: 8.10.2021"
+const CHECKED_OUT_DATE =
+  /(?:Lainattu|Checked out|Utlånad):\s*(\d{1,2}\.\d{1,2}\.\d{4})/i;
+
+// Matches labeled metadata: "Julkaisuvuosi: 2020" or "Year of Publication: 2020"
+const YEAR_LABELED = /(?:Julkaisuvuosi|Year of Publication|Utgivningsår):\s*\[?(\d{4})\]?/i;
+const BARCODE_LABELED = /(?:Viivakoodi|Barcode|Streckkod):\s*(\d+)/i;
+
 export async function fetchLoans(
   session: FinnaSession,
 ): Promise<CheckoutPageData> {
@@ -36,7 +44,7 @@ export async function fetchLoans(
     throw new Error("SESSION_EXPIRED");
   }
 
-  const loans = extractLoans($);
+  const loans = extractLoans($, session.baseUrl);
   const csrf = $('form#renewals input[name="csrf"]').first().attr("value");
 
   if (!csrf) {
@@ -59,7 +67,7 @@ export function parseCheckoutPage(
     throw new Error("SESSION_EXPIRED");
   }
 
-  const loans = extractLoans($);
+  const loans = extractLoans($, renewalUrl ? new URL(renewalUrl).origin : "");
   const csrf = $('form#renewals input[name="csrf"]').first().attr("value");
 
   if (!csrf) {
@@ -72,7 +80,7 @@ export function parseCheckoutPage(
   return { loans, csrf, renewalUrl };
 }
 
-function extractLoans($: ReturnType<typeof cheerio.load>): Loan[] {
+function extractLoans($: ReturnType<typeof cheerio.load>, baseUrl: string): Loan[] {
   const loans: Loan[] = [];
 
   $("tr.myresearch-row").each((_, row) => {
@@ -86,9 +94,55 @@ function extractLoans($: ReturnType<typeof cheerio.load>): Loan[] {
 
     const title = $row.find("h3.record-title").text().trim();
     const statusText = $row.find(".status-column").text();
+    const metadataText = $row.find(".record-core-metadata").text();
     const dueDate = parseDueDate(statusText);
 
-    loans.push({ id, title, dueDate });
+    // Cover image — Finna returns relative paths like /Cover/Show?...
+    const rawCover = $row.find("img.recordcover").attr("src") || undefined;
+    const coverUrl =
+      rawCover && !rawCover.startsWith("http") ? `${baseUrl}${rawCover}` : rawCover;
+
+    // Author name from the inline-linked-field label
+    const author =
+      $row.find(".record-core-metadata .field-label").first().text().trim() ||
+      undefined;
+
+    // Item type (e.g., "Kirja" = Book, "DVD", etc.)
+    const itemType =
+      $row.find(".record-core-metadata .iconlabel").first().text().trim() ||
+      undefined;
+
+    // Year of publication and barcode from metadata text
+    const yearMatch = YEAR_LABELED.exec(metadataText);
+    const year = yearMatch?.[1] || undefined;
+
+    const barcodeMatch = BARCODE_LABELED.exec(metadataText);
+    const barcode = barcodeMatch?.[1] || undefined;
+
+    // Branch (first <strong> in status column, e.g., "Tiedekirjasto Pegasus")
+    const branch =
+      $row.find(".status-column strong").first().text().trim() || undefined;
+
+    // Checked-out date
+    const checkedOutMatch = CHECKED_OUT_DATE.exec(statusText);
+    let checkedOutDate: Date | undefined;
+    if (checkedOutMatch) {
+      const [day, month, yr] = checkedOutMatch[1].split(".").map(Number);
+      checkedOutDate = new Date(yr, month - 1, day);
+    }
+
+    loans.push({
+      id,
+      title,
+      dueDate,
+      coverUrl,
+      author,
+      year,
+      barcode,
+      checkedOutDate,
+      branch,
+      itemType,
+    });
   });
 
   return loans;
