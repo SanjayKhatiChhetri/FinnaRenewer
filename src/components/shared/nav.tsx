@@ -9,6 +9,7 @@ import {
   Clock,
   Wallet,
   Settings,
+  User,
   LogOut,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -63,11 +64,13 @@ export function Sidebar({ userName }: { userName?: string | null }) {
       {/* User footer */}
       <div className="border-t border-hairline-soft px-3 py-4">
         <div className="flex items-center justify-between px-3">
-          <div className="min-w-0">
-            <p className="text-body-sm font-medium text-charcoal truncate">
-              {userName ?? "User"}
-            </p>
-          </div>
+          <Link
+            href="/profile"
+            className="min-w-0 flex items-center gap-2 text-body-sm font-medium text-charcoal hover:text-primary transition-colors"
+          >
+            <User className="h-4 w-4 shrink-0" />
+            <span className="truncate">{userName ?? "User"}</span>
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             className="p-1.5 rounded-md text-steel hover:text-error hover:bg-error-soft transition-colors"
@@ -96,13 +99,22 @@ export function MobileNav({ userName }: { userName?: string | null }) {
             Finna Renewer
           </span>
         </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="p-1.5 rounded-md text-steel hover:text-error transition-colors"
-          title="Sign out"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/profile"
+            className="p-1.5 rounded-md text-steel hover:text-primary transition-colors"
+            title="Profile"
+          >
+            <User className="h-4 w-4" />
+          </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="p-1.5 rounded-md text-steel hover:text-error transition-colors"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       {/* Bottom tab bar */}
