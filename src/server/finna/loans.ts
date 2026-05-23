@@ -5,18 +5,24 @@ import { fetchWithRetry } from "./client";
 // Matches due date in all three Finna UI languages:
 //   English: "Due date: 1.6.2026"   Finnish: "Eräpäivä: 1.6.2026"   Swedish: "Förfallodag: 1.6.2026"
 // Optional time component (some instances include "15.00" after the date).
-const DUE_DATE_LABELED = /(?:Due date|Eräpäivä|Förfallodag):\s*(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{2}\.\d{2}))?/i;
+const DUE_DATE_LABELED =
+  /(?:Due date|Eräpäivä|Förfallodag):\s*(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{2}\.\d{2}))?/i;
 // Fallback for pages that embed just a raw date+time in status text
 const DUE_DATE_WITH_TIME = /(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{2}\.\d{2})/;
 
-export async function fetchLoans(session: FinnaSession): Promise<CheckoutPageData> {
+export async function fetchLoans(
+  session: FinnaSession,
+): Promise<CheckoutPageData> {
   const checkedOutUrl = `${session.baseUrl}/MyResearch/CheckedOut`;
   const resp = await fetchWithRetry(checkedOutUrl, {
     cookies: session.cookies,
     headers: { Referer: session.baseUrl },
   });
 
-  if (resp.url.includes("/MyResearch/Login") || resp.url.includes("/MyResearch/UserLogin")) {
+  if (
+    resp.url.includes("/MyResearch/Login") ||
+    resp.url.includes("/MyResearch/UserLogin")
+  ) {
     throw new Error("SESSION_EXPIRED");
   }
   if (resp.status !== 200) {
@@ -30,26 +36,40 @@ export async function fetchLoans(session: FinnaSession): Promise<CheckoutPageDat
     throw new Error("SESSION_EXPIRED");
   }
 
+  const loans = extractLoans($);
   const csrf = $('form#renewals input[name="csrf"]').first().attr("value");
+
   if (!csrf) {
+    if (loans.length === 0) {
+      return { loans: [], csrf: "", renewalUrl: checkedOutUrl };
+    }
     throw new Error("Could not find renewal form — session may have expired");
   }
 
-  return { loans: extractLoans($), csrf, renewalUrl: checkedOutUrl };
+  return { loans, csrf, renewalUrl: checkedOutUrl };
 }
 
-export function parseCheckoutPage(html: string, renewalUrl = ""): CheckoutPageData {
+export function parseCheckoutPage(
+  html: string,
+  renewalUrl = "",
+): CheckoutPageData {
   const $ = cheerio.load(html);
 
+  if ($('form[name="loginForm"]').length > 0) {
+    throw new Error("SESSION_EXPIRED");
+  }
+
+  const loans = extractLoans($);
   const csrf = $('form#renewals input[name="csrf"]').first().attr("value");
+
   if (!csrf) {
-    if ($('form[name="loginForm"]').length > 0) {
-      throw new Error("SESSION_EXPIRED");
+    if (loans.length === 0) {
+      return { loans: [], csrf: "", renewalUrl };
     }
     throw new Error("CSRF token not found in CheckedOut page");
   }
 
-  return { loans: extractLoans($), csrf, renewalUrl };
+  return { loans, csrf, renewalUrl };
 }
 
 function extractLoans($: ReturnType<typeof cheerio.load>): Loan[] {
