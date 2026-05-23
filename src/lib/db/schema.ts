@@ -45,9 +45,9 @@ export const accounts = pgTable(
   (table) => [
     uniqueIndex("provider_account_idx").on(
       table.provider,
-      table.providerAccountId
+      table.providerAccountId,
     ),
-  ]
+  ],
 );
 
 export const sessions = pgTable("sessions", {
@@ -66,25 +66,36 @@ export const verificationTokens = pgTable(
     token: text("token").notNull().unique(),
     expires: timestamp("expires", { mode: "date" }).notNull(),
   },
-  (table) => [primaryKey({ columns: [table.identifier, table.token] })]
+  (table) => [primaryKey({ columns: [table.identifier, table.token] })],
 );
 
 // ── App Tables ───────────────────────────────────────────────────────────────
 
-export const libraryCredentials = pgTable("library_credentials", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" })
-    .unique(),
-  finnaInstance: text("finna_instance").default("outi").notNull(),
-  finnaUsername: text("finna_username").notNull(),
-  encryptedPassword: text("encrypted_password").notNull(),
-  iv: text("iv").notNull(),
-  authTag: text("auth_tag").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
+export const libraryCredentials = pgTable(
+  "library_credentials",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    label: text("label"),
+    finnaInstance: text("finna_instance").default("outi").notNull(),
+    finnaUsername: text("finna_username").notNull(),
+    encryptedPassword: text("encrypted_password").notNull(),
+    iv: text("iv").notNull(),
+    authTag: text("auth_tag").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_library_credentials_user").on(table.userId),
+    uniqueIndex("idx_library_credentials_user_instance_username").on(
+      table.userId,
+      table.finnaInstance,
+      table.finnaUsername,
+    ),
+  ],
+);
 
 export const userSettings = pgTable("user_settings", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -95,7 +106,9 @@ export const userSettings = pgTable("user_settings", {
   discordWebhookUrl: text("discord_webhook_url"),
   renewDaysBefore: integer("renew_days_before").default(7).notNull(),
   autoRenewEnabled: boolean("auto_renew_enabled").default(true).notNull(),
-  notificationsEnabled: boolean("notifications_enabled").default(true).notNull(),
+  notificationsEnabled: boolean("notifications_enabled")
+    .default(true)
+    .notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 });
@@ -129,5 +142,5 @@ export const renewalLogs = pgTable(
   },
   (table) => [
     index("idx_renewal_logs_user_created").on(table.userId, table.createdAt),
-  ]
+  ],
 );

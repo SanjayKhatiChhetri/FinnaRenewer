@@ -1,13 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
 import { PushManager } from "@/components/push-manager";
-import { linkLibraryCredentials, unlinkLibraryCredentials } from "@/server/actions/library";
+import {
+  linkLibraryCredentials,
+  unlinkLibraryCredentials,
+} from "@/server/actions/library";
 import { updateSettings } from "@/server/actions/settings";
 import {
   BookOpen,
@@ -16,7 +25,10 @@ import {
   Save,
   Loader2,
   CheckCircle2,
+  Plus,
+  CreditCard,
 } from "lucide-react";
+import type { LinkedCard } from "@/server/finna/types";
 
 interface Settings {
   discordWebhookUrl?: string | null;
@@ -31,14 +43,10 @@ const FINNA_LIBRARIES = [
 ];
 
 export function SettingsContent({
-  linked,
-  finnaUsername,
-  finnaInstance,
+  cards,
   settings,
 }: {
-  linked: boolean;
-  finnaUsername?: string;
-  finnaInstance?: string;
+  cards: LinkedCard[];
   settings: Settings | null;
 }) {
   return (
@@ -47,11 +55,11 @@ export function SettingsContent({
         Settings
       </h1>
       <p className="text-body text-slate mb-8">
-        Manage your library connection, notifications, and preferences.
+        Manage your library cards, notifications, and preferences.
       </p>
 
       <div className="space-y-6">
-        <LibraryCredentialsSection linked={linked} username={finnaUsername} instance={finnaInstance} />
+        <LibraryCardsSection cards={cards} />
         <NotificationSection settings={settings} />
         <PreferencesSection settings={settings} />
       </div>
@@ -59,19 +67,116 @@ export function SettingsContent({
   );
 }
 
-function LibraryCredentialsSection({
-  linked,
-  username,
-  instance,
+function LibraryCardsSection({ cards }: { cards: LinkedCard[] }) {
+  const [showForm, setShowForm] = useState(cards.length === 0);
+
+  return (
+    <Card variant="base" padding="md">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-tint-lavender">
+              <CreditCard className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-heading-3">Library Cards</CardTitle>
+              <CardDescription>
+                {cards.length === 0
+                  ? "Link your Finna library credentials"
+                  : `${cards.length} card${cards.length > 1 ? "s" : ""} linked`}
+              </CardDescription>
+            </div>
+          </div>
+          {cards.length > 0 && (
+            <Badge variant="success">
+              {cards.length} connected
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Existing cards */}
+        {cards.map((card) => (
+          <LinkedCardRow key={card.id} card={card} />
+        ))}
+
+        {/* Add card form */}
+        {showForm ? (
+          <LinkCardForm
+            onDone={() => setShowForm(false)}
+            isFirstCard={cards.length === 0}
+          />
+        ) : (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Add another card
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function LinkedCardRow({ card }: { card: LinkedCard }) {
+  const [isPending, startTransition] = useTransition();
+  const [removed, setRemoved] = useState(false);
+
+  function handleUnlink() {
+    startTransition(async () => {
+      await unlinkLibraryCredentials(card.id);
+      setRemoved(true);
+    });
+  }
+
+  if (removed) return null;
+
+  return (
+    <div className="flex items-center justify-between rounded-md bg-surface px-4 py-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <BookOpen className="h-4 w-4 text-primary shrink-0" />
+        <div className="min-w-0">
+          <p className="text-body-sm font-medium text-charcoal truncate">
+            {card.label || card.instanceName}
+          </p>
+          <p className="text-micro text-steel font-mono">{card.finnaUsername}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <CheckCircle2 className="h-4 w-4 text-success" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleUnlink}
+          disabled={isPending}
+          className="text-error hover:text-error"
+        >
+          {isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Unlink className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function LinkCardForm({
+  onDone,
+  isFirstCard,
 }: {
-  linked: boolean;
-  username?: string;
-  instance?: string;
+  onDone: () => void;
+  isFirstCard: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  const libraryName = FINNA_LIBRARIES.find((l) => l.id === instance)?.name;
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   function handleLink(formData: FormData) {
     startTransition(async () => {
@@ -80,121 +185,92 @@ function LibraryCredentialsSection({
       if (result.error) {
         setMessage({ type: "error", text: result.error });
       } else {
-        setMessage({ type: "success", text: "Library card linked successfully!" });
+        setMessage({
+          type: "success",
+          text: "Library card linked successfully!",
+        });
+        if (!isFirstCard) {
+          setTimeout(onDone, 1500);
+        }
       }
     });
   }
 
-  function handleUnlink() {
-    startTransition(async () => {
-      setMessage(null);
-      await unlinkLibraryCredentials();
-      setMessage({ type: "success", text: "Library card unlinked." });
-    });
-  }
-
   return (
-    <Card variant="base" padding="md">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-tint-lavender">
-              <BookOpen className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-heading-3">Library Card</CardTitle>
-              <CardDescription>Your Finna library credentials</CardDescription>
-            </div>
-          </div>
-          {linked && <Badge variant="success">Connected</Badge>}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {linked ? (
-          <div className="space-y-4">
-            {libraryName && (
-              <div className="flex items-center justify-between rounded-md bg-surface px-4 py-3">
-                <div>
-                  <p className="text-micro text-steel uppercase tracking-wider">Library</p>
-                  <p className="text-body-sm font-medium text-charcoal">{libraryName}</p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center justify-between rounded-md bg-surface px-4 py-3">
-              <div>
-                <p className="text-micro text-steel uppercase tracking-wider">Username</p>
-                <p className="text-body-sm font-medium font-mono text-charcoal">
-                  {username}
-                </p>
-              </div>
-              <CheckCircle2 className="h-5 w-5 text-success" />
-            </div>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleUnlink}
-              disabled={isPending}
-            >
-              <Unlink className="h-4 w-4" />
-              Unlink card
-            </Button>
-          </div>
-        ) : (
-          <form action={handleLink} className="space-y-4">
-            <div>
-              <label className="block text-body-sm font-medium text-charcoal mb-1.5">
-                Library
-              </label>
-              <select
-                name="instance"
-                required
-                defaultValue="outi"
-                className="w-full h-11 rounded-md border border-hairline-soft bg-canvas px-3 text-body-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              >
-                {FINNA_LIBRARIES.map((lib) => (
-                  <option key={lib.id} value={lib.id}>
-                    {lib.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Input
-              label="Library Card ID"
-              name="username"
-              placeholder="e.g. OUTI0005542"
-              required
-            />
-            <Input
-              label="PIN Code"
-              name="password"
-              type="password"
-              placeholder="4-digit PIN"
-              required
-            />
-            <Button type="submit" size="sm" disabled={isPending}>
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Link2 className="h-4 w-4" />
-              )}
-              Link card
-            </Button>
-          </form>
-        )}
-
-        {message && (
-          <p
-            className={`mt-4 text-body-sm rounded-md px-3 py-2 ${
-              message.type === "success"
-                ? "bg-tint-mint text-success"
-                : "bg-tint-rose text-error"
-            }`}
+    <div className="border border-hairline-soft rounded-lg p-4">
+      <p className="text-body-sm font-medium text-charcoal mb-3">
+        {isFirstCard ? "Link your library card" : "Add a library card"}
+      </p>
+      <form action={handleLink} className="space-y-3">
+        <div>
+          <label className="block text-body-sm font-medium text-charcoal mb-1.5">
+            Library
+          </label>
+          <select
+            name="instance"
+            required
+            defaultValue="outi"
+            className="w-full h-11 rounded-md border border-hairline-soft bg-canvas px-3 text-body-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           >
-            {message.text}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+            {FINNA_LIBRARIES.map((lib) => (
+              <option key={lib.id} value={lib.id}>
+                {lib.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Input
+          label="Nickname (optional)"
+          name="label"
+          placeholder="e.g. City Library, Uni Library"
+        />
+        <Input
+          label="Library Card ID"
+          name="username"
+          placeholder="e.g. OUTI0005542"
+          required
+        />
+        <Input
+          label="PIN Code"
+          name="password"
+          type="password"
+          placeholder="4-digit PIN"
+          required
+        />
+        <div className="flex items-center gap-2">
+          <Button type="submit" size="sm" disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Link2 className="h-4 w-4" />
+            )}
+            Link card
+          </Button>
+          {!isFirstCard && (
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={onDone}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      </form>
+
+      {message && (
+        <p
+          className={`mt-3 text-body-sm rounded-md px-3 py-2 ${
+            message.type === "success"
+              ? "bg-tint-mint text-success"
+              : "bg-tint-rose text-error"
+          }`}
+        >
+          {message.text}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -252,7 +328,12 @@ function DiscordWebhookInput({ defaultValue }: { defaultValue: string }) {
             defaultValue={defaultValue}
           />
         </div>
-        <Button variant="secondary" size="md" type="submit" disabled={isPending}>
+        <Button
+          variant="secondary"
+          size="md"
+          type="submit"
+          disabled={isPending}
+        >
           {saved ? (
             <CheckCircle2 className="h-4 w-4 text-success" />
           ) : isPending ? (
@@ -267,8 +348,12 @@ function DiscordWebhookInput({ defaultValue }: { defaultValue: string }) {
 }
 
 function PreferencesSection({ settings }: { settings: Settings | null }) {
-  const [autoRenew, setAutoRenew] = useState(settings?.autoRenewEnabled ?? true);
-  const [notifications, setNotifications] = useState(settings?.notificationsEnabled ?? true);
+  const [autoRenew, setAutoRenew] = useState(
+    settings?.autoRenewEnabled ?? true,
+  );
+  const [notifications, setNotifications] = useState(
+    settings?.notificationsEnabled ?? true,
+  );
   const [days, setDays] = useState(settings?.renewDaysBefore ?? 7);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);

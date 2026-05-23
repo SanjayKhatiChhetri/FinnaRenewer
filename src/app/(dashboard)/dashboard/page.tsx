@@ -7,16 +7,16 @@ export const metadata = { title: "Dashboard — Finna Renewer" };
 
 export default async function DashboardPage() {
   const session = await auth();
-  const { linked, username } = await getLinkedStatus();
+  const { linked, cards } = await getLinkedStatus();
 
-  if (!linked) {
+  if (!linked || !cards) {
     return <LinkPrompt />;
   }
 
   return (
     <DashboardContent
       userName={session?.user?.name ?? "there"}
-      finnaUsername={username!}
+      cards={cards}
     />
   );
 }

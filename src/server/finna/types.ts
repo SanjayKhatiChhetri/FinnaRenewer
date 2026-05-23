@@ -9,6 +9,18 @@ export interface Loan {
   checkedOutDate?: Date;
   branch?: string;
   itemType?: string;
+  /** Which library credential this loan belongs to (for multi-card) */
+  credentialId?: string;
+  /** Display label for the card, e.g. "OUTI" or user-chosen nickname */
+  cardLabel?: string;
+}
+
+export interface LinkedCard {
+  id: string;
+  label: string | null;
+  finnaInstance: string;
+  finnaUsername: string;
+  instanceName: string;
 }
 
 export interface RenewalResult {

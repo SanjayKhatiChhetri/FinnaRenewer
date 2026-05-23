@@ -21,16 +21,18 @@ import {
   Calendar,
   MapPin,
   BookType,
+  CreditCard,
 } from "lucide-react";
-import type { Loan } from "@/server/finna/types";
+import type { Loan, LinkedCard } from "@/server/finna/types";
 
 export function DashboardContent({
   userName,
-  finnaUsername,
+  cards,
 }: {
   userName: string;
-  finnaUsername: string;
+  cards: LinkedCard[];
 }) {
+  const multiCard = cards.length > 1;
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,10 +97,19 @@ export function DashboardContent({
             Hi, {userName}
           </h1>
           <p className="text-body text-slate mt-1">
-            Logged in as{" "}
-            <span className="font-mono text-body-sm text-charcoal bg-surface rounded px-1.5 py-0.5">
-              {finnaUsername}
-            </span>
+            {multiCard ? (
+              <span className="inline-flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5" />
+                {cards.length} library cards linked
+              </span>
+            ) : (
+              <>
+                Logged in as{" "}
+                <span className="font-mono text-body-sm text-charcoal bg-surface rounded px-1.5 py-0.5">
+                  {cards[0].finnaUsername}
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -217,6 +228,7 @@ export function DashboardContent({
                 loans={overdue}
                 variant="error"
                 onRenewed={loadLoans}
+                showCardLabel={multiCard}
               />
             )}
             {dueSoon.length > 0 && (
@@ -225,6 +237,7 @@ export function DashboardContent({
                 loans={dueSoon}
                 variant="warning"
                 onRenewed={loadLoans}
+                showCardLabel={multiCard}
               />
             )}
             {safe.length > 0 && (
@@ -233,6 +246,7 @@ export function DashboardContent({
                 loans={safe}
                 variant="success"
                 onRenewed={loadLoans}
+                showCardLabel={multiCard}
               />
             )}
             {loans.length === 0 && (
@@ -284,11 +298,13 @@ function LoanSection({
   loans,
   variant,
   onRenewed,
+  showCardLabel,
 }: {
   title: string;
   loans: Loan[];
   variant: "error" | "warning" | "success";
   onRenewed: () => void;
+  showCardLabel: boolean;
 }) {
   return (
     <div>
@@ -299,10 +315,11 @@ function LoanSection({
       <div className="space-y-3">
         {loans.map((loan) => (
           <LoanCard
-            key={loan.id}
+            key={`${loan.credentialId}-${loan.id}`}
             loan={loan}
             variant={variant}
             onRenewed={onRenewed}
+            showCardLabel={showCardLabel}
           />
         ))}
       </div>
@@ -314,10 +331,12 @@ function LoanCard({
   loan,
   variant,
   onRenewed,
+  showCardLabel,
 }: {
   loan: Loan;
   variant: "error" | "warning" | "success";
   onRenewed: () => void;
+  showCardLabel: boolean;
 }) {
   const [renewing, setRenewing] = useState(false);
   const [renewResult, setRenewResult] = useState<{
@@ -337,7 +356,7 @@ function LoanCard({
   async function handleRenew() {
     setRenewing(true);
     setRenewResult(null);
-    const result = await renewSingleLoan(loan.id);
+    const result = await renewSingleLoan(loan.id, loan.credentialId);
     if (result.error) {
       setRenewResult({ success: false, message: result.error });
     } else {
@@ -396,6 +415,12 @@ function LoanCard({
 
           {/* Metadata row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-micro text-steel">
+            {showCardLabel && loan.cardLabel && (
+              <span className="inline-flex items-center gap-1 text-primary font-medium">
+                <CreditCard className="h-3 w-3" />
+                {loan.cardLabel}
+              </span>
+            )}
             {loan.itemType && (
               <span className="inline-flex items-center gap-1">
                 <BookOpen className="h-3 w-3" />

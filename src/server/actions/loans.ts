@@ -3,11 +3,12 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { libraryCredentials } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { decrypt } from "@/server/services/encryption";
 import { finnaLogin } from "@/server/finna/client";
 import { fetchLoans } from "@/server/finna/loans";
 import { renewSelected } from "@/server/finna/renew";
+import { FINNA_INSTANCES } from "@/server/finna/instances";
 import { runRenewalForUser } from "@/server/services/renewal-engine";
 import type { Loan, FinnaInstanceId } from "@/server/finna/types";
 
@@ -18,28 +19,50 @@ export async function fetchUserLoans(): Promise<{
   const session = await auth();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
-  const [creds] = await db
+  const allCreds = await db
     .select()
     .from(libraryCredentials)
-    .where(eq(libraryCredentials.userId, session.user.id))
-    .limit(1);
+    .where(eq(libraryCredentials.userId, session.user.id));
 
-  if (!creds) return { error: "No library credentials linked" };
+  if (allCreds.length === 0) return { error: "No library credentials linked" };
 
-  try {
-    const password = decrypt(creds.encryptedPassword, creds.iv, creds.authTag);
-    const finnaSession = await finnaLogin(
-      creds.finnaUsername,
-      password,
-      creds.finnaInstance as FinnaInstanceId,
-    );
-    const { loans } = await fetchLoans(finnaSession);
-    return { loans };
-  } catch (err) {
-    return {
-      error: err instanceof Error ? err.message : "Failed to fetch loans",
-    };
+  const allLoans: Loan[] = [];
+  const errors: string[] = [];
+
+  for (const creds of allCreds) {
+    const instanceName =
+      FINNA_INSTANCES[creds.finnaInstance as FinnaInstanceId]?.name ??
+      creds.finnaInstance;
+    const cardLabel = creds.label || instanceName;
+
+    try {
+      const password = decrypt(
+        creds.encryptedPassword,
+        creds.iv,
+        creds.authTag,
+      );
+      const finnaSession = await finnaLogin(
+        creds.finnaUsername,
+        password,
+        creds.finnaInstance as FinnaInstanceId,
+      );
+      const { loans } = await fetchLoans(finnaSession);
+
+      for (const loan of loans) {
+        allLoans.push({ ...loan, credentialId: creds.id, cardLabel });
+      }
+    } catch (err) {
+      errors.push(
+        `${cardLabel}: ${err instanceof Error ? err.message : "Failed"}`,
+      );
+    }
   }
+
+  if (allLoans.length === 0 && errors.length > 0) {
+    return { error: errors.join("; ") };
+  }
+
+  return { loans: allLoans };
 }
 
 export async function renewUserLoans() {
@@ -51,14 +74,22 @@ export async function renewUserLoans() {
 
 export async function renewSingleLoan(
   loanId: string,
+  credentialId?: string,
 ): Promise<{ success?: boolean; error?: string; message?: string }> {
   const session = await auth();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
+  const whereClause = credentialId
+    ? and(
+        eq(libraryCredentials.id, credentialId),
+        eq(libraryCredentials.userId, session.user.id),
+      )
+    : eq(libraryCredentials.userId, session.user.id);
+
   const [creds] = await db
     .select()
     .from(libraryCredentials)
-    .where(eq(libraryCredentials.userId, session.user.id))
+    .where(whereClause)
     .limit(1);
 
   if (!creds) return { error: "No library credentials linked" };

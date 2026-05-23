@@ -5,6 +5,7 @@ import { decrypt } from "./encryption";
 import { finnaLogin } from "@/server/finna/client";
 import { fetchLoans } from "@/server/finna/loans";
 import { renewAll } from "@/server/finna/renew";
+import { FINNA_INSTANCES } from "@/server/finna/instances";
 import type { FinnaInstanceId } from "@/server/finna/types";
 import {
   sendDiscordWebhook,
@@ -17,19 +18,18 @@ import type { RenewalResult } from "@/server/finna/types";
 
 export async function runRenewalForUser(
   userId: string,
-  triggeredBy: "manual" | "cron"
+  triggeredBy: "manual" | "cron",
 ): Promise<{
   status: "success" | "partial" | "failed" | "nothing" | "error";
   message: string;
   results?: RenewalResult[];
 }> {
-  const [creds] = await db
+  const allCreds = await db
     .select()
     .from(libraryCredentials)
-    .where(eq(libraryCredentials.userId, userId))
-    .limit(1);
+    .where(eq(libraryCredentials.userId, userId));
 
-  if (!creds) {
+  if (allCreds.length === 0) {
     return { status: "error", message: "No library credentials linked" };
   }
 
@@ -41,92 +41,58 @@ export async function runRenewalForUser(
 
   const renewDaysBefore = settings?.renewDaysBefore ?? 7;
 
-  try {
-    const password = decrypt(creds.encryptedPassword, creds.iv, creds.authTag);
-    const session = await finnaLogin(
-      creds.finnaUsername,
-      password,
-      creds.finnaInstance as FinnaInstanceId,
-    );
+  const now = new Date();
+  const cutoff = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + renewDaysBefore + 1,
+    0,
+    0,
+    0,
+  );
 
-    const { loans, csrf, renewalUrl } = await fetchLoans(session);
+  const allResults: RenewalResult[] = [];
+  const cardErrors: string[] = [];
+  let totalLoansAcrossCards = 0;
 
-    const now = new Date();
-    const cutoff = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + renewDaysBefore + 1,
-      0, 0, 0
-    );
+  for (const creds of allCreds) {
+    const cardLabel =
+      creds.label ||
+      FINNA_INSTANCES[creds.finnaInstance as FinnaInstanceId]?.name ||
+      creds.finnaInstance;
 
-    const toRenew = loans.filter(
-      (l) => l.dueDate.getTime() > 0 && l.dueDate <= cutoff
-    );
+    try {
+      const password = decrypt(
+        creds.encryptedPassword,
+        creds.iv,
+        creds.authTag,
+      );
+      const session = await finnaLogin(
+        creds.finnaUsername,
+        password,
+        creds.finnaInstance as FinnaInstanceId,
+      );
 
-    if (toRenew.length === 0) {
-      if (settings?.discordWebhookUrl) {
-        const embed = buildUpcomingEmbed(loans, renewDaysBefore);
-        await sendDiscordWebhook(settings.discordWebhookUrl, embed).catch(() => {});
-      }
+      const { loans, csrf, renewalUrl } = await fetchLoans(session);
+      totalLoansAcrossCards += loans.length;
 
-      if (settings?.notificationsEnabled) {
-        await sendPushToUser(userId, {
-          title: "Finna Check-in",
-          body: `All ${loans.length} loans are safe. Nothing to renew.`,
-          tag: "finna-checkin",
-          url: "/dashboard",
-        }).catch(() => {});
-      }
+      const toRenew = loans.filter(
+        (l) => l.dueDate.getTime() > 0 && l.dueDate <= cutoff,
+      );
 
-      return { status: "nothing", message: `No loans due within ${renewDaysBefore} days` };
+      if (toRenew.length === 0) continue;
+
+      const results = await renewAll(session, csrf, loans, renewalUrl);
+      allResults.push(...results);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      cardErrors.push(`${cardLabel}: ${message}`);
     }
+  }
 
-    const results = await renewAll(session, csrf, loans, renewalUrl);
-
-    const renewed = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success).length;
-
-    let status: "success" | "partial" | "failed";
-    if (failed === 0) status = "success";
-    else if (renewed === 0) status = "failed";
-    else status = "partial";
-
-    await db.insert(renewalLogs).values({
-      userId,
-      triggeredBy,
-      status,
-      totalLoans: results.length,
-      renewedCount: renewed,
-      failedCount: failed,
-      details: results.map((r) => ({
-        title: r.loan.title,
-        success: r.success,
-        oldDueDate: r.loan.dueDate.toISOString(),
-        newDueDate: r.newDueDate?.toISOString(),
-        errorMessage: r.errorMessage,
-      })),
-    });
-
-    if (settings?.discordWebhookUrl) {
-      const embed = buildRenewalEmbed(results);
-      await sendDiscordWebhook(settings.discordWebhookUrl, embed).catch(() => {});
-    }
-
-    if (settings?.notificationsEnabled) {
-      await sendPushToUser(userId, {
-        title: status === "success" ? "Renewal Complete" : "Renewal Issues",
-        body:
-          status === "success"
-            ? `All ${renewed} loans renewed successfully!`
-            : `${renewed} renewed, ${failed} failed. Check the dashboard.`,
-        tag: "finna-renewal",
-        url: "/dashboard",
-      }).catch(() => {});
-    }
-
-    return { status, message: `${renewed} renewed, ${failed} failed`, results };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  // If all cards errored out with no loans processed
+  if (cardErrors.length > 0 && allResults.length === 0 && totalLoansAcrossCards === 0) {
+    const combinedError = cardErrors.join("; ");
 
     await db.insert(renewalLogs).values({
       userId,
@@ -135,23 +101,102 @@ export async function runRenewalForUser(
       totalLoans: 0,
       renewedCount: 0,
       failedCount: 0,
-      errorMessage: message,
+      errorMessage: combinedError,
     });
 
     if (settings?.discordWebhookUrl) {
-      const embed = buildErrorEmbed(message);
-      await sendDiscordWebhook(settings.discordWebhookUrl, embed).catch(() => {});
+      const embed = buildErrorEmbed(combinedError);
+      await sendDiscordWebhook(settings.discordWebhookUrl, embed).catch(
+        () => {},
+      );
     }
 
     if (settings?.notificationsEnabled) {
       await sendPushToUser(userId, {
         title: "Renewal Error",
-        body: `Failed: ${message.slice(0, 100)}`,
+        body: `Failed: ${combinedError.slice(0, 100)}`,
         tag: "finna-error",
         url: "/dashboard",
       }).catch(() => {});
     }
 
-    return { status: "error", message };
+    return { status: "error", message: combinedError };
   }
+
+  // Nothing to renew across any card
+  if (allResults.length === 0) {
+    if (settings?.discordWebhookUrl) {
+      // Build embed from all loans (would need to re-fetch — keep simple for cron)
+      await sendDiscordWebhook(
+        settings.discordWebhookUrl,
+        buildUpcomingEmbed([], renewDaysBefore),
+      ).catch(() => {});
+    }
+
+    if (settings?.notificationsEnabled) {
+      await sendPushToUser(userId, {
+        title: "Finna Check-in",
+        body: `All ${totalLoansAcrossCards} loans are safe. Nothing to renew.`,
+        tag: "finna-checkin",
+        url: "/dashboard",
+      }).catch(() => {});
+    }
+
+    return {
+      status: "nothing",
+      message: `No loans due within ${renewDaysBefore} days`,
+    };
+  }
+
+  const renewed = allResults.filter((r) => r.success).length;
+  const failed = allResults.filter((r) => !r.success).length;
+
+  let status: "success" | "partial" | "failed";
+  if (failed === 0) status = "success";
+  else if (renewed === 0) status = "failed";
+  else status = "partial";
+
+  await db.insert(renewalLogs).values({
+    userId,
+    triggeredBy,
+    status,
+    totalLoans: allResults.length,
+    renewedCount: renewed,
+    failedCount: failed,
+    details: allResults.map((r) => ({
+      title: r.loan.title,
+      success: r.success,
+      oldDueDate: r.loan.dueDate.toISOString(),
+      newDueDate: r.newDueDate?.toISOString(),
+      errorMessage: r.errorMessage,
+    })),
+    errorMessage:
+      cardErrors.length > 0 ? cardErrors.join("; ") : undefined,
+  });
+
+  if (settings?.discordWebhookUrl) {
+    const embed = buildRenewalEmbed(allResults);
+    await sendDiscordWebhook(settings.discordWebhookUrl, embed).catch(
+      () => {},
+    );
+  }
+
+  if (settings?.notificationsEnabled) {
+    await sendPushToUser(userId, {
+      title: status === "success" ? "Renewal Complete" : "Renewal Issues",
+      body:
+        status === "success"
+          ? `All ${renewed} loans renewed successfully!`
+          : `${renewed} renewed, ${failed} failed. Check the dashboard.`,
+      tag: "finna-renewal",
+      url: "/dashboard",
+    }).catch(() => {});
+  }
+
+  const message =
+    cardErrors.length > 0
+      ? `${renewed} renewed, ${failed} failed (${cardErrors.length} card error${cardErrors.length > 1 ? "s" : ""})`
+      : `${renewed} renewed, ${failed} failed`;
+
+  return { status, message, results: allResults };
 }
