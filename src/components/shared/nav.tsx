@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BookOpen, LayoutDashboard, Clock, Settings, LogOut } from "lucide-react";
+import {
+  BookOpen,
+  LayoutDashboard,
+  Clock,
+  Wallet,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/account", label: "Account", icon: Wallet },
   { href: "/history", label: "History", icon: Clock },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -42,7 +50,7 @@ export function Sidebar({ userName }: { userName?: string | null }) {
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-body-sm font-medium transition-colors",
                 active
                   ? "bg-primary-soft text-primary-deep"
-                  : "text-slate hover:bg-surface hover:text-ink"
+                  : "text-slate hover:bg-surface hover:text-ink",
               )}
             >
               <Icon className="h-[18px] w-[18px]" />
@@ -107,7 +115,7 @@ export function MobileNav({ userName }: { userName?: string | null }) {
               href={href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
-                active ? "text-primary" : "text-steel"
+                active ? "text-primary" : "text-steel",
               )}
             >
               <Icon className="h-5 w-5" />

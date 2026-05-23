@@ -48,4 +48,27 @@ export interface FinnaInstance {
   authMethod: "Database" | "MultiILS";
 }
 
+export interface Hold {
+  title: string;
+  pickupLocation?: string;
+  status?: string;
+  position?: number;
+  expirationDate?: Date;
+  createdDate?: Date;
+  recordUrl?: string;
+  credentialId?: string;
+  cardLabel?: string;
+}
+
+export interface Fine {
+  title: string;
+  type: string;
+  date?: Date;
+  amount: string;
+  balance: string;
+  recordUrl?: string;
+  credentialId?: string;
+  cardLabel?: string;
+}
+
 export type FinnaInstanceId = "outi" | "oula";
