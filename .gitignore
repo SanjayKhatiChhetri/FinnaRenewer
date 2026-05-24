@@ -7,3 +7,5 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 screenshots/
+.claude/worktrees/
+.claude/settings.local.json

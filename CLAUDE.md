@@ -84,6 +84,18 @@ Finna pages are scraped with Cheerio. Before proposing any scraping/parsing fix:
 
 This avoids wrong-approach loops (e.g., the OUTI `Eräpäivä` bug took 3 deploy cycles because we assumed English labels).
 
+## Skills (slash commands)
+
+| Command          | What it does                                                      |
+| ---------------- | ----------------------------------------------------------------- |
+| `/ship`          | Build + commit + push pipeline                                    |
+| `/checkpoint`    | Quick WIP commit (no build, no push)                              |
+| `/verify`        | Run build and report pass/fail                                    |
+| `/feature <desc>`| Multi-phase agent workflow: explore -> plan -> implement -> review -> ship |
+| `/explore-code <q>` | Spawn a focused search agent with minimal context             |
+
+Skills live in `.claude/skills/`. Use `/ship` for finished work, `/checkpoint` for save points mid-task.
+
 ## Environment variables
 
 Required in `.env.local` (and Vercel dashboard):
