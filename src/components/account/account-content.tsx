@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { fetchUserHolds } from "@/server/actions/holds";
 import { fetchUserFines } from "@/server/actions/fines";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,19 +21,43 @@ import {
 } from "lucide-react";
 import type { Hold, Fine } from "@/server/finna/types";
 
-export function AccountContent() {
-  const [holds, setHolds] = useState<Hold[]>([]);
-  const [fines, setFines] = useState<Fine[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [holdsError, setHoldsError] = useState("");
-  const [finesError, setFinesError] = useState("");
+function normalizeHolds(holds: Hold[]): Hold[] {
+  return holds.map((h) => ({
+    ...h,
+    expirationDate: h.expirationDate ? new Date(h.expirationDate) : undefined,
+    createdDate: h.createdDate ? new Date(h.createdDate) : undefined,
+  }));
+}
 
-  useEffect(() => {
-    loadAll();
-  }, []);
+function normalizeFines(fines: Fine[]): Fine[] {
+  return fines.map((f) => ({
+    ...f,
+    date: f.date ? new Date(f.date) : undefined,
+  }));
+}
 
-  async function loadAll() {
-    setLoading(true);
+export function AccountContent({
+  initialHolds,
+  initialHoldsError,
+  initialFines,
+  initialFinesError,
+  fetchedAt: initialFetchedAt,
+}: {
+  initialHolds: Hold[];
+  initialHoldsError?: string;
+  initialFines: Fine[];
+  initialFinesError?: string;
+  fetchedAt: string;
+}) {
+  const [holds, setHolds] = useState<Hold[]>(normalizeHolds(initialHolds));
+  const [fines, setFines] = useState<Fine[]>(normalizeFines(initialFines));
+  const [refreshing, setRefreshing] = useState(false);
+  const [holdsError, setHoldsError] = useState(initialHoldsError ?? "");
+  const [finesError, setFinesError] = useState(initialFinesError ?? "");
+  const [fetchedAt, setFetchedAt] = useState(initialFetchedAt);
+
+  async function refresh() {
+    setRefreshing(true);
     setHoldsError("");
     setFinesError("");
 
@@ -45,29 +69,17 @@ export function AccountContent() {
     if (holdsResult.error) {
       setHoldsError(holdsResult.error);
     } else if (holdsResult.holds) {
-      setHolds(
-        holdsResult.holds.map((h) => ({
-          ...h,
-          expirationDate: h.expirationDate
-            ? new Date(h.expirationDate)
-            : undefined,
-          createdDate: h.createdDate ? new Date(h.createdDate) : undefined,
-        })),
-      );
+      setHolds(normalizeHolds(holdsResult.holds));
     }
 
     if (finesResult.error) {
       setFinesError(finesResult.error);
     } else if (finesResult.fines) {
-      setFines(
-        finesResult.fines.map((f) => ({
-          ...f,
-          date: f.date ? new Date(f.date) : undefined,
-        })),
-      );
+      setFines(normalizeFines(finesResult.fines));
     }
 
-    setLoading(false);
+    setFetchedAt(new Date().toISOString());
+    setRefreshing(false);
   }
 
   return (
@@ -81,27 +93,30 @@ export function AccountContent() {
             Holds, fines, and library account status.
           </p>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={loadAll}
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <FetchedAtLabel fetchedAt={fetchedAt} />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={refresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      {loading && (
+      {refreshing && (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
           <p className="text-body-sm text-slate">
-            Loading account data from Finna…
+            Refreshing account data from Finna…
           </p>
         </div>
       )}
 
-      {!loading && (
+      {!refreshing && (
         <div className="space-y-6">
           {/* Stats row */}
           <div className="grid grid-cols-2 gap-3">
@@ -134,6 +149,20 @@ export function AccountContent() {
         </div>
       )}
     </div>
+  );
+}
+
+function FetchedAtLabel({ fetchedAt }: { fetchedAt: string }) {
+  return (
+    <span
+      className="text-micro text-steel hidden sm:inline"
+      suppressHydrationWarning
+    >
+      {new Date(fetchedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </span>
   );
 }
 

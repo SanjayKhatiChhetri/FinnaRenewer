@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   fetchUserLoans,
   renewUserLoans,
@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { daysUntilDue, formatFinnishDate, truncate } from "@/lib/utils";
+import { daysUntilDue, truncate } from "@/lib/utils";
 import {
   RefreshCw,
   BookOpen,
@@ -25,45 +25,49 @@ import {
 } from "lucide-react";
 import type { Loan, LinkedCard } from "@/server/finna/types";
 
+function normalizeLoans(loans: Loan[]): Loan[] {
+  return loans.map((l) => ({
+    ...l,
+    dueDate: new Date(l.dueDate),
+    checkedOutDate: l.checkedOutDate ? new Date(l.checkedOutDate) : undefined,
+  }));
+}
+
 export function DashboardContent({
   userName,
   cards,
+  initialLoans,
+  initialError,
+  fetchedAt: initialFetchedAt,
 }: {
   userName: string;
   cards: LinkedCard[];
+  initialLoans: Loan[];
+  initialError?: string;
+  fetchedAt: string;
 }) {
   const multiCard = cards.length > 1;
-  const [loans, setLoans] = useState<Loan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loans, setLoans] = useState<Loan[]>(normalizeLoans(initialLoans));
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(initialError ?? "");
+  const [fetchedAt, setFetchedAt] = useState(initialFetchedAt);
   const [renewalStatus, setRenewalStatus] = useState<{
     status: string;
     message: string;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    loadLoans();
-  }, []);
-
-  async function loadLoans() {
-    setLoading(true);
+  async function refresh() {
+    setRefreshing(true);
     setError("");
     const result = await fetchUserLoans();
     if (result.error) {
       setError(result.error);
     } else if (result.loans) {
-      setLoans(
-        result.loans.map((l) => ({
-          ...l,
-          dueDate: new Date(l.dueDate),
-          checkedOutDate: l.checkedOutDate
-            ? new Date(l.checkedOutDate)
-            : undefined,
-        })),
-      );
+      setLoans(normalizeLoans(result.loans));
     }
-    setLoading(false);
+    setFetchedAt(new Date().toISOString());
+    setRefreshing(false);
   }
 
   function handleRenewAll() {
@@ -77,7 +81,7 @@ export function DashboardContent({
           status: result.status,
           message: result.message,
         });
-        loadLoans();
+        refresh();
       }
     });
   }
@@ -112,22 +116,23 @@ export function DashboardContent({
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <FetchedAtLabel fetchedAt={fetchedAt} />
           <Button
             variant="secondary"
             size="sm"
-            onClick={loadLoans}
-            disabled={loading}
+            onClick={refresh}
+            disabled={refreshing}
           >
             <RefreshCw
-              className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
             />
             Refresh
           </Button>
           <Button
             size="sm"
             onClick={handleRenewAll}
-            disabled={isPending || loading || loans.length === 0}
+            disabled={isPending || refreshing || loans.length === 0}
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -186,18 +191,18 @@ export function DashboardContent({
         </Card>
       )}
 
-      {/* Loading */}
-      {loading && (
+      {/* Refreshing overlay */}
+      {refreshing && (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
           <p className="text-body-sm text-slate">
-            Loading your loans from Finna…
+            Refreshing loans from Finna…
           </p>
         </div>
       )}
 
-      {/* Stats */}
-      {!loading && !error && (
+      {/* Stats + Loans */}
+      {!refreshing && !error && (
         <>
           <div className="grid grid-cols-3 gap-3 mb-8">
             <StatCard
@@ -227,7 +232,7 @@ export function DashboardContent({
                 title="Overdue"
                 loans={overdue}
                 variant="error"
-                onRenewed={loadLoans}
+                onRenewed={refresh}
                 showCardLabel={multiCard}
               />
             )}
@@ -236,7 +241,7 @@ export function DashboardContent({
                 title="Due soon"
                 loans={dueSoon}
                 variant="warning"
-                onRenewed={loadLoans}
+                onRenewed={refresh}
                 showCardLabel={multiCard}
               />
             )}
@@ -245,7 +250,7 @@ export function DashboardContent({
                 title="Safe"
                 loans={safe}
                 variant="success"
-                onRenewed={loadLoans}
+                onRenewed={refresh}
                 showCardLabel={multiCard}
               />
             )}
@@ -264,6 +269,20 @@ export function DashboardContent({
         </>
       )}
     </div>
+  );
+}
+
+function FetchedAtLabel({ fetchedAt }: { fetchedAt: string }) {
+  return (
+    <span
+      className="text-micro text-steel hidden sm:inline"
+      suppressHydrationWarning
+    >
+      {new Date(fetchedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </span>
   );
 }
 
