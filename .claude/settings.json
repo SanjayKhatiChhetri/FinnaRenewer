@@ -10,6 +10,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd ~/projects/finna-renewer && git diff --quiet && git diff --cached --quiet && echo '{\"systemMessage\":\"\"}' || echo '{\"systemMessage\":\"Uncommitted changes detected. Consider /ship or /checkpoint before ending.\"}'"
+          }
+        ]
+      }
     ]
   }
 }
