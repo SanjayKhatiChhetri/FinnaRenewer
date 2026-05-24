@@ -29,8 +29,7 @@ const cardVariants = cva("rounded-lg transition-colors", {
 });
 
 export interface CardProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {}
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, padding, ...props }, ref) => (
@@ -39,7 +38,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       ref={ref}
       {...props}
     />
-  )
+  ),
 );
 Card.displayName = "Card";
 
@@ -47,10 +46,16 @@ function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("mb-4", className)} {...props} />;
 }
 
-function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+function CardTitle({
+  className,
+  ...props
+}: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("font-display text-heading-2 font-medium text-ink", className)}
+      className={cn(
+        "font-display text-heading-2 font-medium text-ink",
+        className,
+      )}
       {...props}
     />
   );
@@ -71,11 +76,15 @@ function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 
 function CardFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("mt-6 flex items-center gap-3", className)}
-      {...props}
-    />
+    <div className={cn("mt-6 flex items-center gap-3", className)} {...props} />
   );
 }
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };
+export {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+};

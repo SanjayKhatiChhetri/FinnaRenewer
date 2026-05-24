@@ -32,45 +32,62 @@ wsl.exe bash -lc "cd ~/projects/finna-renewer && source ~/.nvm/nvm.sh && set -a 
 ## Code style
 
 - Pragmatic, semantic, zero-tech-debt code. Clean enough that a new developer reads it and understands intent immediately.
-- No comments explaining *what* — only *why* when non-obvious. Well-named identifiers carry the what.
+- No comments explaining _what_ — only _why_ when non-obvious. Well-named identifiers carry the what.
 - No premature abstractions. Three similar lines beats a premature helper.
 - No dead code, no backwards-compat shims, no feature flags for hypothetical futures.
 - If a trade-off is made, document it in `docs/DECISIONS.md`.
 
 ## Key files
 
-| Path | Purpose |
-|------|---------|
-| `src/server/services/renewal-engine.ts` | Core business logic — the renewal orchestrator |
-| `src/server/finna/` | Finna HTTP scraping (login, loans, renew) |
-| `src/server/services/encryption.ts` | AES-256-GCM encrypt/decrypt |
-| `src/lib/auth.ts` | Auth.js config (providers, JWT callbacks) |
-| `src/lib/db/schema.ts` | All 8 database tables |
-| `src/app/globals.css` | Design system tokens (@theme) |
-| `src/components/ui/` | Design system primitives (button, card, input, badge, toggle) |
-| `middleware.ts` | Route protection (auth guard) |
-| `vercel.json` | Cron schedule (Monday 6 AM UTC) |
+| Path                                    | Purpose                                                       |
+| --------------------------------------- | ------------------------------------------------------------- |
+| `src/server/services/renewal-engine.ts` | Core business logic — the renewal orchestrator                |
+| `src/server/finna/`                     | Finna HTTP scraping (login, loans, renew)                     |
+| `src/server/services/encryption.ts`     | AES-256-GCM encrypt/decrypt                                   |
+| `src/lib/auth.ts`                       | Auth.js config (providers, JWT callbacks)                     |
+| `src/lib/db/schema.ts`                  | All 8 database tables                                         |
+| `src/app/globals.css`                   | Design system tokens (@theme)                                 |
+| `src/components/ui/`                    | Design system primitives (button, card, input, badge, toggle) |
+| `middleware.ts`                         | Route protection (auth guard)                                 |
+| `vercel.json`                           | Cron schedule (Monday 6 AM UTC)                               |
 
 ## Documentation
 
-| File | What |
-|------|------|
-| `GOTCHAS.md` | Environment + framework pitfalls. Check here first when something breaks. |
-| `docs/ARCHITECTURE.md` | System diagram, data flow, security model, file map |
-| `docs/DECISIONS.md` | ADRs — why each technical choice was made |
-| `docs/DESIGN-SYSTEM.md` | Colors, typography, component variants |
+| File                    | What                                                                      |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `GOTCHAS.md`            | Environment + framework pitfalls. Check here first when something breaks. |
+| `docs/ARCHITECTURE.md`  | System diagram, data flow, security model, file map                       |
+| `docs/DECISIONS.md`     | ADRs — why each technical choice was made                                 |
+| `docs/DESIGN-SYSTEM.md` | Colors, typography, component variants                                    |
 
 ## Branches
 
-| Branch | Content |
-|--------|---------|
-| `main` | Next.js web app (production) |
-| `go-discord-setup` | Original Go CLI + Discord bot |
-| `background` | Reverse-engineering notes, project context docs |
+| Branch             | Content                                         |
+| ------------------ | ----------------------------------------------- |
+| `main`             | Next.js web app (production)                    |
+| `go-discord-setup` | Original Go CLI + Discord bot                   |
+| `background`       | Reverse-engineering notes, project context docs |
+
+## Environment
+
+- **WSL2 + Windows 11.** All build/dev/git commands run via `wsl.exe bash -lc "..."`. Never use UNC paths for builds.
+- **nvm-managed Node.** Always `source ~/.nvm/nvm.sh` before `npm`/`npx` in WSL commands.
+- **GPG signing** is configured in git config. If signing fails (TTY/passphrase), ask before falling back to unsigned commits.
+
+## Scraping discipline
+
+Finna pages are scraped with Cheerio. Before proposing any scraping/parsing fix:
+
+1. Fetch the live page HTML with real credentials.
+2. Inspect actual DOM structure and label language (Finna defaults to Finnish, not English).
+3. Propose the fix based on evidence — not assumptions.
+
+This avoids wrong-approach loops (e.g., the OUTI `Eräpäivä` bug took 3 deploy cycles because we assumed English labels).
 
 ## Environment variables
 
 Required in `.env.local` (and Vercel dashboard):
+
 - `DATABASE_URL` — Neon PostgreSQL connection string
 - `AUTH_SECRET` — Auth.js signing secret
 - `ENCRYPTION_KEY` — 64-char hex for AES-256-GCM
@@ -80,5 +97,6 @@ Required in `.env.local` (and Vercel dashboard):
 - `VAPID_SUBJECT` — mailto: for VAPID
 
 Optional:
+
 - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — Google OAuth
 - `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` — GitHub OAuth

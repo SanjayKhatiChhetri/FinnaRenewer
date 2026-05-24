@@ -124,14 +124,22 @@ export function RegisterForm() {
             </p>
           )}
 
-          <Button type="submit" size="md" className="w-full mt-2" disabled={loading}>
+          <Button
+            type="submit"
+            size="md"
+            className="w-full mt-2"
+            disabled={loading}
+          >
             {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-body-sm text-slate">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:text-primary-hover font-medium">
+          <Link
+            href="/login"
+            className="text-primary hover:text-primary-hover font-medium"
+          >
             Log in
           </Link>
         </p>

@@ -15,7 +15,7 @@ interface DiscordEmbed {
 
 export async function sendDiscordWebhook(
   webhookUrl: string,
-  embed: DiscordEmbed
+  embed: DiscordEmbed,
 ): Promise<void> {
   const resp = await fetch(webhookUrl, {
     method: "POST",
@@ -50,17 +50,18 @@ export function buildRenewalEmbed(results: RenewalResult[]): DiscordEmbed {
   for (const r of results) {
     if (r.success && r.newDueDate) {
       const delta = Math.floor(
-        (r.newDueDate.getTime() - r.loan.dueDate.getTime()) / (1000 * 60 * 60 * 24)
+        (r.newDueDate.getTime() - r.loan.dueDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
       lines.push(
         `**${truncate(r.loan.title, 80)}**\n` +
           `Was due: ${formatFinnishDate(r.loan.dueDate)}\n` +
           `Now due: ${formatFinnishDate(r.newDueDate)}\n` +
-          `Extended: ${delta} days`
+          `Extended: ${delta} days`,
       );
     } else {
       lines.push(
-        `**${truncate(r.loan.title, 80)}**\n${r.errorMessage ?? "Unknown error"}`
+        `**${truncate(r.loan.title, 80)}**\n${r.errorMessage ?? "Unknown error"}`,
       );
     }
   }
@@ -73,8 +74,14 @@ export function buildRenewalEmbed(results: RenewalResult[]): DiscordEmbed {
   };
 }
 
-export function buildUpcomingEmbed(loans: Loan[], daysThreshold: number): DiscordEmbed {
-  const lines = [`No loans due within **${daysThreshold} days**.`, `You have **${loans.length}** loans.`];
+export function buildUpcomingEmbed(
+  loans: Loan[],
+  daysThreshold: number,
+): DiscordEmbed {
+  const lines = [
+    `No loans due within **${daysThreshold} days**.`,
+    `You have **${loans.length}** loans.`,
+  ];
 
   return {
     title: "Finna check-in — nothing to renew",

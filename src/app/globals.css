@@ -57,21 +57,21 @@
   --font-body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
-  --text-display-xl: 3.5rem;    /* 56px */
-  --text-display-lg: 3rem;      /* 48px */
-  --text-display: 2.25rem;      /* 36px */
-  --text-heading-1: 1.75rem;    /* 28px */
-  --text-heading-2: 1.5rem;     /* 24px */
-  --text-heading-3: 1.25rem;    /* 20px */
-  --text-body-lg: 1.125rem;     /* 18px */
-  --text-body: 1rem;            /* 16px */
-  --text-body-sm: 0.875rem;     /* 14px */
-  --text-caption: 0.8125rem;    /* 13px */
-  --text-micro: 0.75rem;        /* 12px */
+  --text-display-xl: 3.5rem; /* 56px */
+  --text-display-lg: 3rem; /* 48px */
+  --text-display: 2.25rem; /* 36px */
+  --text-heading-1: 1.75rem; /* 28px */
+  --text-heading-2: 1.5rem; /* 24px */
+  --text-heading-3: 1.25rem; /* 20px */
+  --text-body-lg: 1.125rem; /* 18px */
+  --text-body: 1rem; /* 16px */
+  --text-body-sm: 0.875rem; /* 14px */
+  --text-caption: 0.8125rem; /* 13px */
+  --text-micro: 0.75rem; /* 12px */
 
   /* ── Spacing (semantic aliases — use Tailwind built-in scale for p/m/gap) */
-  --spacing-section: 4rem;  /* 64px */
-  --spacing-hero: 6rem;     /* 96px */
+  --spacing-section: 4rem; /* 64px */
+  --spacing-hero: 6rem; /* 96px */
 
   /* ── Border Radius ──────────────────────────────────────────────── */
   --radius-xs: 4px;
@@ -107,7 +107,12 @@
     font-size: var(--text-body);
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     color: var(--color-ink);
     letter-spacing: -0.02em;
@@ -115,11 +120,22 @@
     font-weight: 500;
   }
 
-  h1 { font-size: var(--text-display-lg); letter-spacing: -0.03em; }
-  h2 { font-size: var(--text-display); }
-  h3 { font-size: var(--text-heading-1); }
-  h4 { font-size: var(--text-heading-2); }
-  h5 { font-size: var(--text-heading-3); }
+  h1 {
+    font-size: var(--text-display-lg);
+    letter-spacing: -0.03em;
+  }
+  h2 {
+    font-size: var(--text-display);
+  }
+  h3 {
+    font-size: var(--text-heading-1);
+  }
+  h4 {
+    font-size: var(--text-heading-2);
+  }
+  h5 {
+    font-size: var(--text-heading-3);
+  }
 
   ::selection {
     background-color: var(--color-primary-soft);
@@ -153,10 +169,22 @@
     text-wrap: balance;
   }
 
-  .card-pastel-peach { background-color: var(--color-tint-peach); }
-  .card-pastel-rose { background-color: var(--color-tint-rose); }
-  .card-pastel-mint { background-color: var(--color-tint-mint); }
-  .card-pastel-lavender { background-color: var(--color-tint-lavender); }
-  .card-pastel-sky { background-color: var(--color-tint-sky); }
-  .card-pastel-yellow { background-color: var(--color-tint-yellow); }
+  .card-pastel-peach {
+    background-color: var(--color-tint-peach);
+  }
+  .card-pastel-rose {
+    background-color: var(--color-tint-rose);
+  }
+  .card-pastel-mint {
+    background-color: var(--color-tint-mint);
+  }
+  .card-pastel-lavender {
+    background-color: var(--color-tint-lavender);
+  }
+  .card-pastel-sky {
+    background-color: var(--color-tint-sky);
+  }
+  .card-pastel-yellow {
+    background-color: var(--color-tint-yellow);
+  }
 }

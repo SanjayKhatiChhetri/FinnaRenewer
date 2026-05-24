@@ -122,10 +122,7 @@ function HistoryItem({ log }: { log: RenewalLog }) {
           {details && details.length > 0 ? (
             <div className="space-y-2">
               {details.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 text-body-sm"
-                >
+                <div key={i} className="flex items-center gap-2 text-body-sm">
                   {item.success ? (
                     <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                   ) : (

@@ -33,14 +33,10 @@ export function encrypt(plaintext: string): {
 export function decrypt(
   encrypted: string,
   iv: string,
-  authTag: string
+  authTag: string,
 ): string {
   const key = getKey();
-  const decipher = createDecipheriv(
-    ALGORITHM,
-    key,
-    Buffer.from(iv, "hex")
-  );
+  const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(iv, "hex"));
   decipher.setAuthTag(Buffer.from(authTag, "hex"));
 
   let decrypted = decipher.update(encrypted, "hex", "utf8");

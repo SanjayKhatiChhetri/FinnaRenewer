@@ -103,14 +103,22 @@ export function LoginForm() {
             </p>
           )}
 
-          <Button type="submit" size="md" className="w-full mt-2" disabled={loading}>
+          <Button
+            type="submit"
+            size="md"
+            className="w-full mt-2"
+            disabled={loading}
+          >
             {loading ? "Logging in…" : "Log in"}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-body-sm text-slate">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-primary hover:text-primary-hover font-medium">
+          <Link
+            href="/register"
+            className="text-primary hover:text-primary-hover font-medium"
+          >
             Sign up
           </Link>
         </p>

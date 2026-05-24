@@ -8,10 +8,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-soft px-4">
-      <Link
-        href="/"
-        className="mb-8 flex items-center gap-2.5"
-      >
+      <Link href="/" className="mb-8 flex items-center gap-2.5">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-soft">
           <BookOpen className="h-5 w-5 text-primary" />
         </div>
@@ -19,9 +16,7 @@ export default function AuthLayout({
           Finna Renewer
         </span>
       </Link>
-      <div className="w-full max-w-md">
-        {children}
-      </div>
+      <div className="w-full max-w-md">{children}</div>
     </div>
   );
 }

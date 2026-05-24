@@ -23,7 +23,9 @@ export default async function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm">Log in</Button>
+              <Button variant="ghost" size="sm">
+                Log in
+              </Button>
             </Link>
             <Link href="/register">
               <Button size="sm">Get started</Button>
@@ -46,8 +48,8 @@ export default async function LandingPage() {
 
           <p className="mt-6 text-body-lg text-slate max-w-xl mx-auto leading-relaxed">
             Connect your Oulu Finna library card and we&apos;ll automatically
-            renew your loans before they&apos;re due. Get notified via push
-            or Discord.
+            renew your loans before they&apos;re due. Get notified via push or
+            Discord.
           </p>
 
           <div className="mt-10 flex items-center justify-center gap-4">
@@ -55,7 +57,9 @@ export default async function LandingPage() {
               <Button size="lg">Start for free</Button>
             </Link>
             <Link href="/login">
-              <Button variant="secondary" size="lg">Log in</Button>
+              <Button variant="secondary" size="lg">
+                Log in
+              </Button>
             </Link>
           </div>
         </section>
@@ -87,7 +91,8 @@ export default async function LandingPage() {
       <footer className="border-t border-hairline">
         <div className="mx-auto max-w-5xl px-6 py-8 text-center">
           <p className="text-caption text-steel">
-            Finna Renewer &middot; Open source &middot; Not affiliated with Finna or Oulu City Library
+            Finna Renewer &middot; Open source &middot; Not affiliated with
+            Finna or Oulu City Library
           </p>
         </div>
       </footer>

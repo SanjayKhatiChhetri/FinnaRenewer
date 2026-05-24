@@ -61,14 +61,14 @@ Cron trigger (Monday 6 AM UTC)
 
 ## Security model
 
-| Layer | Mechanism |
-|-------|-----------|
-| Auth | Auth.js v5, JWT sessions, bcrypt (12 rounds) for passwords |
-| Credentials at rest | AES-256-GCM, per-record random IV, key from env var |
-| Route protection | Next.js middleware checks session for /dashboard/*, /settings/*, /history/* |
-| Cron auth | Bearer token (CRON_SECRET) |
-| CSRF | Finna's own CSRF tokens extracted and submitted back |
-| Secrets | All in env vars, never committed (.env.local gitignored) |
+| Layer               | Mechanism                                                                    |
+| ------------------- | ---------------------------------------------------------------------------- |
+| Auth                | Auth.js v5, JWT sessions, bcrypt (12 rounds) for passwords                   |
+| Credentials at rest | AES-256-GCM, per-record random IV, key from env var                          |
+| Route protection    | Next.js middleware checks session for /dashboard/_, /settings/_, /history/\* |
+| Cron auth           | Bearer token (CRON_SECRET)                                                   |
+| CSRF                | Finna's own CSRF tokens extracted and submitted back                         |
+| Secrets             | All in env vars, never committed (.env.local gitignored)                     |
 
 ## Database schema
 

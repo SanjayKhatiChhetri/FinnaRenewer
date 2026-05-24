@@ -13,9 +13,7 @@ const BACKOFF_MS = [500, 1000, 2000, 4000];
 
 function extractCookiesFromHeaders(headers: Headers): string {
   const setCookies = headers.getSetCookie?.() ?? [];
-  return setCookies
-    .map((sc) => sc.split(";")[0])
-    .join("; ");
+  return setCookies.map((sc) => sc.split(";")[0]).join("; ");
 }
 
 function mergeCookies(existing: string, fresh: string): string {
@@ -37,7 +35,7 @@ function mergeCookies(existing: string, fresh: string): string {
 export async function fetchWithRetry(
   url: string,
   init: RequestInit & { cookies?: string } = {},
-  maxAttempts = 4
+  maxAttempts = 4,
 ): Promise<Response> {
   const headers = new Headers(BASE_HEADERS);
   if (init.cookies) {
@@ -71,7 +69,9 @@ export async function fetchWithRetry(
     }
   }
 
-  throw new Error(`Request failed after ${maxAttempts} attempts: ${lastError?.message}`);
+  throw new Error(
+    `Request failed after ${maxAttempts} attempts: ${lastError?.message}`,
+  );
 }
 
 export async function finnaLogin(
@@ -154,11 +154,15 @@ function extractFormFields(
   const $ = cheerio.load(html);
 
   // Find the specific form whose auth_method matches the instance config
-  let targetForm = $('form[name="loginForm"]').filter((_, form) => {
-    return $(form).find(
-      `input[name="auth_method"][value="${instance.authMethod}"]`,
-    ).length > 0;
-  }).first();
+  let targetForm = $('form[name="loginForm"]')
+    .filter((_, form) => {
+      return (
+        $(form).find(
+          `input[name="auth_method"][value="${instance.authMethod}"]`,
+        ).length > 0
+      );
+    })
+    .first();
 
   // Fall back to first loginForm (single-form pages)
   if (targetForm.length === 0) {
@@ -167,16 +171,20 @@ function extractFormFields(
 
   const fields: Record<string, string> = {};
   // Include submit buttons so processLogin is captured in the page's language
-  targetForm.find('input[type="hidden"], input[type="submit"]').each((_, el) => {
-    const name = $(el).attr("name");
-    const value = $(el).attr("value");
-    if (name && value) fields[name] = value;
-  });
+  targetForm
+    .find('input[type="hidden"], input[type="submit"]')
+    .each((_, el) => {
+      const name = $(el).attr("name");
+      const value = $(el).attr("value");
+      if (name && value) fields[name] = value;
+    });
 
   return fields;
 }
 
 function isLoginRedirect(location: string): boolean {
-  return location.includes("/MyResearch/Login")
-    || location.includes("/MyResearch/UserLogin");
+  return (
+    location.includes("/MyResearch/Login") ||
+    location.includes("/MyResearch/UserLogin")
+  );
 }

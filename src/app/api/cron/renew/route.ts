@@ -20,11 +20,7 @@ export async function GET(req: Request) {
     .from(users)
     .innerJoin(libraryCredentials, eq(libraryCredentials.userId, users.id))
     .leftJoin(userSettings, eq(userSettings.userId, users.id))
-    .where(
-      and(
-        eq(userSettings.autoRenewEnabled, true)
-      )
-    );
+    .where(and(eq(userSettings.autoRenewEnabled, true)));
 
   const results: { userId: string; status: string; message: string }[] = [];
 

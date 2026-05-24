@@ -28,17 +28,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             "focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
             "transition-colors",
             error && "border-error focus:border-error focus:ring-error/20",
-            className
+            className,
           )}
           ref={ref}
           {...props}
         />
-        {error && (
-          <p className="text-micro text-error mt-1">{error}</p>
-        )}
+        {error && <p className="text-micro text-error mt-1">{error}</p>}
       </div>
     );
-  }
+  },
 );
 Input.displayName = "Input";
 

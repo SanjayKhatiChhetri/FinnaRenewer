@@ -57,12 +57,14 @@ export async function getUserSettings() {
     .where(eq(userSettings.userId, session.user.id))
     .limit(1);
 
-  return settings ?? {
-    discordWebhookUrl: null,
-    renewDaysBefore: 7,
-    autoRenewEnabled: true,
-    notificationsEnabled: true,
-  };
+  return (
+    settings ?? {
+      discordWebhookUrl: null,
+      renewDaysBefore: 7,
+      autoRenewEnabled: true,
+      notificationsEnabled: true,
+    }
+  );
 }
 
 export async function subscribePush(subscription: {

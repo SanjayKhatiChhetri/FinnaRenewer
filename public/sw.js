@@ -3,20 +3,22 @@ const PRECACHE_URLS = ["/dashboard", "/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)),
   );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -26,8 +28,10 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     fetch(event.request).catch(() =>
-      caches.match(event.request).then((cached) => cached || caches.match("/offline"))
-    )
+      caches
+        .match(event.request)
+        .then((cached) => cached || caches.match("/offline")),
+    ),
   );
 });
 
@@ -47,7 +51,9 @@ self.addEventListener("push", (event) => {
     actions: data.actions || [],
   };
 
-  event.waitUntil(self.registration.showNotification(data.title || "Finna Renewer", options));
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Finna Renewer", options),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
@@ -56,10 +62,12 @@ self.addEventListener("notificationclick", (event) => {
   const url = event.notification.data?.url || "/dashboard";
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((c) => c.url.includes(url));
-      if (existing) return existing.focus();
-      return self.clients.openWindow(url);
-    })
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        const existing = clients.find((c) => c.url.includes(url));
+        if (existing) return existing.focus();
+        return self.clients.openWindow(url);
+      }),
   );
 });

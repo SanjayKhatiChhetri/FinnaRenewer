@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Bell, BellOff } from "lucide-react";
 
 export function PushManager() {
-  const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 

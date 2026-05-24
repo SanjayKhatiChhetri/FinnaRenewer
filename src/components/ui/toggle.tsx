@@ -23,7 +23,7 @@ export function Toggle({
     <label
       className={cn(
         "flex items-start gap-3 cursor-pointer select-none",
-        disabled && "opacity-50 cursor-not-allowed"
+        disabled && "opacity-50 cursor-not-allowed",
       )}
     >
       <button
@@ -35,13 +35,13 @@ export function Toggle({
         className={cn(
           "relative inline-flex h-6 w-11 shrink-0 items-center rounded-pill transition-colors",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-          checked ? "bg-primary" : "bg-hairline-strong"
+          checked ? "bg-primary" : "bg-hairline-strong",
         )}
       >
         <span
           className={cn(
             "inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform",
-            checked ? "translate-x-6" : "translate-x-1"
+            checked ? "translate-x-6" : "translate-x-1",
           )}
         />
       </button>

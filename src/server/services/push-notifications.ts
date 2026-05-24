@@ -24,7 +24,7 @@ export interface PushPayload {
 
 export async function sendPushToUser(
   userId: string,
-  payload: PushPayload
+  payload: PushPayload,
 ): Promise<void> {
   if (!configureVapid()) return;
 
@@ -43,7 +43,7 @@ export async function sendPushToUser(
             endpoint: sub.endpoint,
             keys: { p256dh: sub.p256dh, auth: sub.auth },
           },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
         );
       } catch (err: unknown) {
         const statusCode = (err as { statusCode?: number })?.statusCode;
@@ -51,14 +51,12 @@ export async function sendPushToUser(
           stale.push(sub.id);
         }
       }
-    })
+    }),
   );
 
   if (stale.length > 0) {
     for (const id of stale) {
-      await db
-        .delete(pushSubscriptions)
-        .where(eq(pushSubscriptions.id, id));
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, id));
     }
   }
 }
