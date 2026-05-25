@@ -124,6 +124,24 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const libraryCache = pgTable(
+  "library_cache",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    credentialId: uuid("credential_id")
+      .notNull()
+      .references(() => libraryCredentials.id, { onDelete: "cascade" }),
+    loans: jsonb("loans").$type<import("@/server/finna/types").Loan[]>().default([]).notNull(),
+    holds: jsonb("holds").$type<import("@/server/finna/types").Hold[]>().default([]).notNull(),
+    fines: jsonb("fines").$type<import("@/server/finna/types").Fine[]>().default([]).notNull(),
+    syncedAt: timestamp("synced_at", { mode: "date" }).defaultNow().notNull(),
+    syncError: text("sync_error"),
+  },
+  (table) => [
+    uniqueIndex("idx_library_cache_credential").on(table.credentialId),
+  ],
+);
+
 export const renewalLogs = pgTable(
   "renewal_logs",
   {

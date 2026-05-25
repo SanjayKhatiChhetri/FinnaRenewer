@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { fetchUserHolds } from "@/server/actions/holds";
-import { fetchUserFines } from "@/server/actions/fines";
+import { useState, useEffect } from "react";
+import { triggerSync } from "@/server/actions/sync";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,45 +40,46 @@ export function AccountContent({
   initialHoldsError,
   initialFines,
   initialFinesError,
-  fetchedAt: initialFetchedAt,
+  syncedAt: initialSyncedAt,
+  hasCachedData,
 }: {
   initialHolds: Hold[];
   initialHoldsError?: string;
   initialFines: Fine[];
   initialFinesError?: string;
-  fetchedAt: string;
+  syncedAt: string | null;
+  hasCachedData: boolean;
 }) {
   const [holds, setHolds] = useState<Hold[]>(normalizeHolds(initialHolds));
   const [fines, setFines] = useState<Fine[]>(normalizeFines(initialFines));
-  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [holdsError, setHoldsError] = useState(initialHoldsError ?? "");
   const [finesError, setFinesError] = useState(initialFinesError ?? "");
-  const [fetchedAt, setFetchedAt] = useState(initialFetchedAt);
+  const [syncedAt, setSyncedAt] = useState(initialSyncedAt);
 
-  async function refresh() {
-    setRefreshing(true);
+  // Auto-sync on first visit when no cache exists
+  useEffect(() => {
+    if (!hasCachedData) {
+      handleSync();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSync() {
+    setSyncing(true);
     setHoldsError("");
     setFinesError("");
 
-    const [holdsResult, finesResult] = await Promise.all([
-      fetchUserHolds(),
-      fetchUserFines(),
-    ]);
+    const result = await triggerSync();
 
-    if (holdsResult.error) {
-      setHoldsError(holdsResult.error);
-    } else if (holdsResult.holds) {
-      setHolds(normalizeHolds(holdsResult.holds));
+    if (result.error) {
+      setHoldsError(result.error);
     }
 
-    if (finesResult.error) {
-      setFinesError(finesResult.error);
-    } else if (finesResult.fines) {
-      setFines(normalizeFines(finesResult.fines));
-    }
-
-    setFetchedAt(new Date().toISOString());
-    setRefreshing(false);
+    setHolds(normalizeHolds(result.holds));
+    setFines(normalizeFines(result.fines));
+    setSyncedAt(result.syncedAt);
+    setSyncing(false);
   }
 
   return (
@@ -94,29 +94,29 @@ export function AccountContent({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <FetchedAtLabel fetchedAt={fetchedAt} />
+          <SyncedAtLabel syncedAt={syncedAt} />
           <Button
             variant="secondary"
             size="sm"
-            onClick={refresh}
-            disabled={refreshing}
+            onClick={handleSync}
+            disabled={syncing}
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
       </div>
 
-      {refreshing && (
+      {syncing && (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
           <p className="text-body-sm text-slate">
-            Refreshing account data from Finna…
+            Syncing with Finna…
           </p>
         </div>
       )}
 
-      {!refreshing && (
+      {!syncing && (
         <div className="space-y-6">
           {/* Stats row */}
           <div className="grid grid-cols-2 gap-3">
@@ -152,16 +152,28 @@ export function AccountContent({
   );
 }
 
-function FetchedAtLabel({ fetchedAt }: { fetchedAt: string }) {
+function SyncedAtLabel({ syncedAt }: { syncedAt: string | null }) {
+  if (!syncedAt) return null;
+
+  const date = new Date(syncedAt);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMin / 60);
+
+  let relative: string;
+  if (diffMin < 1) relative = "just now";
+  else if (diffMin < 60) relative = `${diffMin}m ago`;
+  else if (diffHrs < 24) relative = `${diffHrs}h ago`;
+  else relative = `${Math.floor(diffHrs / 24)}d ago`;
+
   return (
     <span
       className="text-micro text-steel hidden sm:inline"
+      title={`Synced ${date.toLocaleString()}`}
       suppressHydrationWarning
     >
-      {new Date(fetchedAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
+      Synced {relative}
     </span>
   );
 }

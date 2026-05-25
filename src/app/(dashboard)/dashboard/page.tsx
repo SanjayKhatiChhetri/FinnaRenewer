@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getLinkedStatus } from "@/server/actions/library";
-import { fetchUserLoans } from "@/server/actions/loans";
+import { fetchCachedData } from "@/server/actions/sync";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { LinkPrompt } from "@/components/dashboard/link-prompt";
 
@@ -14,15 +14,20 @@ export default async function DashboardPage() {
     return <LinkPrompt />;
   }
 
-  const result = await fetchUserLoans();
+  const cached = await fetchCachedData();
 
   return (
     <DashboardContent
       userName={session?.user?.name ?? "there"}
       cards={cards}
-      initialLoans={result.loans ?? []}
-      initialError={result.error}
-      fetchedAt={new Date().toISOString()}
+      initialLoans={cached.loans}
+      initialError={
+        cached.syncErrors.length > 0
+          ? cached.syncErrors.join("; ")
+          : undefined
+      }
+      syncedAt={cached.syncedAt}
+      hasCachedData={cached.hasCachedData}
     />
   );
 }

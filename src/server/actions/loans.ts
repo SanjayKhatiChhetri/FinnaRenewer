@@ -8,64 +8,38 @@ import { decrypt } from "@/server/services/encryption";
 import { finnaLogin } from "@/server/finna/client";
 import { fetchLoans } from "@/server/finna/loans";
 import { renewSelected } from "@/server/finna/renew";
-import { FINNA_INSTANCES } from "@/server/finna/instances";
 import { runRenewalForUser } from "@/server/services/renewal-engine";
+import { readCachedData } from "@/server/services/sync";
 import type { Loan, FinnaInstanceId } from "@/server/finna/types";
 
 export async function fetchUserLoans(): Promise<{
   loans?: Loan[];
+  syncedAt?: string;
   error?: string;
 }> {
   const session = await auth();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
-  const allCreds = await db
-    .select()
-    .from(libraryCredentials)
-    .where(eq(libraryCredentials.userId, session.user.id));
-
-  if (allCreds.length === 0) return { error: "No library credentials linked" };
-
-  const results = await Promise.all(
-    allCreds.map(async (creds) => {
-      const instanceName =
-        FINNA_INSTANCES[creds.finnaInstance as FinnaInstanceId]?.name ??
-        creds.finnaInstance;
-      const cardLabel = creds.label || instanceName;
-
-      try {
-        const password = decrypt(
-          creds.encryptedPassword,
-          creds.iv,
-          creds.authTag,
-        );
-        const finnaSession = await finnaLogin(
-          creds.finnaUsername,
-          password,
-          creds.finnaInstance as FinnaInstanceId,
-        );
-        const { loans } = await fetchLoans(finnaSession);
-        return {
-          loans: loans.map((l) => ({ ...l, credentialId: creds.id, cardLabel })),
-          error: null,
-        };
-      } catch (err) {
-        return {
-          loans: [] as Loan[],
-          error: `${cardLabel}: ${err instanceof Error ? err.message : "Failed"}`,
-        };
-      }
-    }),
-  );
-
-  const allLoans = results.flatMap((r) => r.loans);
-  const errors = results.map((r) => r.error).filter(Boolean) as string[];
-
-  if (allLoans.length === 0 && errors.length > 0) {
-    return { error: errors.join("; ") };
+  // Read from cache first
+  const cached = await readCachedData(session.user.id);
+  if (cached && cached.loans.length > 0) {
+    return {
+      loans: cached.loans,
+      syncedAt: cached.syncedAt ?? undefined,
+      error: cached.syncErrors.length > 0 ? cached.syncErrors.join("; ") : undefined,
+    };
   }
 
-  return { loans: allLoans };
+  // No cache — return empty with flag (UI will trigger initial sync)
+  if (cached) {
+    return {
+      loans: [],
+      syncedAt: cached.syncedAt ?? undefined,
+      error: cached.syncErrors.length > 0 ? cached.syncErrors.join("; ") : undefined,
+    };
+  }
+
+  return { loans: [] };
 }
 
 export async function renewUserLoans() {

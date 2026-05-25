@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import {
-  fetchUserLoans,
-  renewUserLoans,
-  renewSingleLoan,
-} from "@/server/actions/loans";
+import { useState, useEffect, useTransition } from "react";
+import { renewUserLoans, renewSingleLoan } from "@/server/actions/loans";
+import { triggerSync } from "@/server/actions/sync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,36 +35,45 @@ export function DashboardContent({
   cards,
   initialLoans,
   initialError,
-  fetchedAt: initialFetchedAt,
+  syncedAt: initialSyncedAt,
+  hasCachedData,
 }: {
   userName: string;
   cards: LinkedCard[];
   initialLoans: Loan[];
   initialError?: string;
-  fetchedAt: string;
+  syncedAt: string | null;
+  hasCachedData: boolean;
 }) {
   const multiCard = cards.length > 1;
   const [loans, setLoans] = useState<Loan[]>(normalizeLoans(initialLoans));
-  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(initialError ?? "");
-  const [fetchedAt, setFetchedAt] = useState(initialFetchedAt);
+  const [syncedAt, setSyncedAt] = useState(initialSyncedAt);
   const [renewalStatus, setRenewalStatus] = useState<{
     status: string;
     message: string;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  async function refresh() {
-    setRefreshing(true);
+  // Auto-sync on first visit when no cache exists
+  useEffect(() => {
+    if (!hasCachedData) {
+      handleSync();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSync() {
+    setSyncing(true);
     setError("");
-    const result = await fetchUserLoans();
+    const result = await triggerSync();
     if (result.error) {
       setError(result.error);
-    } else if (result.loans) {
-      setLoans(normalizeLoans(result.loans));
     }
-    setFetchedAt(new Date().toISOString());
-    setRefreshing(false);
+    setLoans(normalizeLoans(result.loans));
+    setSyncedAt(result.syncedAt);
+    setSyncing(false);
   }
 
   function handleRenewAll() {
@@ -81,7 +87,8 @@ export function DashboardContent({
           status: result.status,
           message: result.message,
         });
-        refresh();
+        // Re-sync after renewal to update cache with new due dates
+        handleSync();
       }
     });
   }
@@ -117,22 +124,22 @@ export function DashboardContent({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <FetchedAtLabel fetchedAt={fetchedAt} />
+          <SyncedAtLabel syncedAt={syncedAt} />
           <Button
             variant="secondary"
             size="sm"
-            onClick={refresh}
-            disabled={refreshing}
+            onClick={handleSync}
+            disabled={syncing}
           >
             <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`}
             />
             Refresh
           </Button>
           <Button
             size="sm"
             onClick={handleRenewAll}
-            disabled={isPending || refreshing || loans.length === 0}
+            disabled={isPending || syncing || loans.length === 0}
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -177,13 +184,13 @@ export function DashboardContent({
       )}
 
       {/* Error */}
-      {error && (
+      {error && !syncing && (
         <Card variant="rose" padding="md" className="mb-6">
           <CardContent className="flex items-start gap-3">
             <XCircle className="h-5 w-5 text-error shrink-0 mt-0.5" />
             <div>
               <p className="text-body-sm font-medium text-ink">
-                Failed to load loans
+                {error.includes("Rate limited") ? "Sync cooldown" : "Sync error"}
               </p>
               <p className="text-body-sm text-charcoal">{error}</p>
             </div>
@@ -191,18 +198,18 @@ export function DashboardContent({
         </Card>
       )}
 
-      {/* Refreshing overlay */}
-      {refreshing && (
+      {/* Syncing overlay */}
+      {syncing && (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
           <p className="text-body-sm text-slate">
-            Refreshing loans from Finna…
+            Syncing with Finna…
           </p>
         </div>
       )}
 
       {/* Stats + Loans */}
-      {!refreshing && !error && (
+      {!syncing && (
         <>
           <div className="grid grid-cols-3 gap-3 mb-8">
             <StatCard
@@ -232,7 +239,7 @@ export function DashboardContent({
                 title="Overdue"
                 loans={overdue}
                 variant="error"
-                onRenewed={refresh}
+                onRenewed={handleSync}
                 showCardLabel={multiCard}
               />
             )}
@@ -241,7 +248,7 @@ export function DashboardContent({
                 title="Due soon"
                 loans={dueSoon}
                 variant="warning"
-                onRenewed={refresh}
+                onRenewed={handleSync}
                 showCardLabel={multiCard}
               />
             )}
@@ -250,7 +257,7 @@ export function DashboardContent({
                 title="Safe"
                 loans={safe}
                 variant="success"
-                onRenewed={refresh}
+                onRenewed={handleSync}
                 showCardLabel={multiCard}
               />
             )}
@@ -272,16 +279,28 @@ export function DashboardContent({
   );
 }
 
-function FetchedAtLabel({ fetchedAt }: { fetchedAt: string }) {
+function SyncedAtLabel({ syncedAt }: { syncedAt: string | null }) {
+  if (!syncedAt) return null;
+
+  const date = new Date(syncedAt);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMin / 60);
+
+  let relative: string;
+  if (diffMin < 1) relative = "just now";
+  else if (diffMin < 60) relative = `${diffMin}m ago`;
+  else if (diffHrs < 24) relative = `${diffHrs}h ago`;
+  else relative = `${Math.floor(diffHrs / 24)}d ago`;
+
   return (
     <span
       className="text-micro text-steel hidden sm:inline"
+      title={`Synced ${date.toLocaleString()}`}
       suppressHydrationWarning
     >
-      {new Date(fetchedAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
+      Synced {relative}
     </span>
   );
 }

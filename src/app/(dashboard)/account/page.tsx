@@ -1,22 +1,23 @@
-import { fetchUserHolds } from "@/server/actions/holds";
-import { fetchUserFines } from "@/server/actions/fines";
+import { fetchCachedData } from "@/server/actions/sync";
 import { AccountContent } from "@/components/account/account-content";
 
 export const metadata = { title: "Account — Finna Renewer" };
 
 export default async function AccountPage() {
-  const [holdsResult, finesResult] = await Promise.all([
-    fetchUserHolds(),
-    fetchUserFines(),
-  ]);
+  const cached = await fetchCachedData();
 
   return (
     <AccountContent
-      initialHolds={holdsResult.holds ?? []}
-      initialHoldsError={holdsResult.error}
-      initialFines={finesResult.fines ?? []}
-      initialFinesError={finesResult.error}
-      fetchedAt={new Date().toISOString()}
+      initialHolds={cached.holds}
+      initialHoldsError={
+        cached.syncErrors.length > 0
+          ? cached.syncErrors.join("; ")
+          : undefined
+      }
+      initialFines={cached.fines}
+      initialFinesError={undefined}
+      syncedAt={cached.syncedAt}
+      hasCachedData={cached.hasCachedData}
     />
   );
 }

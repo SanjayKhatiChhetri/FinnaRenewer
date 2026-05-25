@@ -11,6 +11,7 @@ import { FINNA_INSTANCES } from "@/server/finna/instances";
 import type { FinnaInstanceId, LinkedCard } from "@/server/finna/types";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { syncUserData } from "@/server/services/sync";
 
 const linkSchema = z.object({
   instance: z.string().min(1),
@@ -74,6 +75,9 @@ export async function linkLibraryCredentials(formData: FormData) {
         updatedAt: new Date(),
       },
     });
+
+  // Populate cache immediately after linking
+  syncUserData(session.user.id).catch(() => {});
 
   revalidatePath("/dashboard");
   revalidatePath("/settings");
