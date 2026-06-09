@@ -1,5 +1,10 @@
 import { db } from "@/lib/db";
-import { libraryCredentials, userSettings, renewalLogs } from "@/lib/db/schema";
+import {
+  libraryCredentials,
+  userSettings,
+  renewalLogs,
+  libraryCache,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { decrypt } from "./encryption";
 import { finnaLogin } from "@/server/finna/client";
@@ -84,6 +89,33 @@ export async function runRenewalForUser(
 
       const results = await renewAll(session, csrf, loans, renewalUrl);
       allResults.push(...results);
+
+      // Refresh this card's cached loans with post-renewal due dates so the
+      // dashboard reflects renewals immediately instead of waiting for the
+      // next sync. Holds/fines are unaffected by renewal, so leave them.
+      const newDueById = new Map(
+        results
+          .filter((r) => r.success && r.newDueDate)
+          .map((r) => [r.loan.id, r.newDueDate as Date]),
+      );
+      const refreshedLoans = loans.map((l) => ({
+        ...l,
+        credentialId: creds.id,
+        cardLabel,
+        dueDate: newDueById.get(l.id) ?? l.dueDate,
+      }));
+
+      await db
+        .insert(libraryCache)
+        .values({
+          credentialId: creds.id,
+          loans: refreshedLoans,
+          syncedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: [libraryCache.credentialId],
+          set: { loans: refreshedLoans, syncedAt: now },
+        });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       cardErrors.push(`${cardLabel}: ${message}`);
