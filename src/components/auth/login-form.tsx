@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm() {
   const [error, setError] = useState("");
@@ -33,7 +34,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card variant="elevated" padding="lg">
+    <Card variant="elevated" padding="lg" className="animate-fade-up">
       <CardContent>
         <h2 className="font-display text-heading-1 font-medium text-ink text-center mb-1">
           Welcome back
@@ -98,7 +99,7 @@ export function LoginForm() {
           />
 
           {error && (
-            <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2">
+            <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2 animate-scale-in">
               {error}
             </p>
           )}
@@ -109,6 +110,7 @@ export function LoginForm() {
             className="w-full mt-2"
             disabled={loading}
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Logging in…" : "Log in"}
           </Button>
         </form>

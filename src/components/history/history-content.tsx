@@ -4,14 +4,13 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Clock,
   ChevronDown,
-  ChevronUp,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   Zap,
 } from "lucide-react";
+import { BookshelfIllustration } from "@/components/shared/illustrations";
 
 interface RenewalLog {
   id: string;
@@ -36,19 +35,23 @@ export function HistoryContent({ logs }: { logs: RenewalLog[] }) {
       </p>
 
       {logs.length === 0 ? (
-        <Card variant="flat" padding="lg">
+        <Card variant="flat" padding="lg" className="animate-fade-up">
           <CardContent className="text-center py-12">
-            <Clock className="h-10 w-10 text-stone mx-auto mb-3" />
-            <p className="text-body text-slate">No renewal history yet</p>
-            <p className="text-body-sm text-steel mt-1">
-              Renewals will appear here after your first run.
+            <BookshelfIllustration className="w-44 mx-auto mb-4 animate-float" />
+            <p className="text-body-lg font-medium text-ink">
+              The shelf is quiet — for now
+            </p>
+            <p className="text-body-sm text-slate mt-1 max-w-sm mx-auto">
+              Every renewal we run for you lands here, with the full
+              book-by-book result. The first one arrives with Monday&apos;s
+              check.
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {logs.map((log) => (
-            <HistoryItem key={log.id} log={log} />
+          {logs.map((log, i) => (
+            <HistoryItem key={log.id} log={log} index={i} />
           ))}
         </div>
       )}
@@ -56,7 +59,7 @@ export function HistoryContent({ logs }: { logs: RenewalLog[] }) {
   );
 }
 
-function HistoryItem({ log }: { log: RenewalLog }) {
+function HistoryItem({ log, index }: { log: RenewalLog; index: number }) {
   const [expanded, setExpanded] = useState(false);
 
   const statusIcon =
@@ -80,10 +83,16 @@ function HistoryItem({ log }: { log: RenewalLog }) {
     | null;
 
   return (
-    <Card variant="base" padding="none">
+    <Card
+      variant="base"
+      padding="none"
+      style={{ "--i": index } as React.CSSProperties}
+      className="animate-fade-up stagger overflow-hidden"
+    >
       <button
-        className="w-full text-left px-5 py-4 flex items-center justify-between gap-4"
+        className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 cursor-pointer transition-colors duration-150 hover:bg-surface-soft"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
       >
         <div className="flex items-center gap-3 min-w-0">
           {statusIcon}
@@ -104,44 +113,47 @@ function HistoryItem({ log }: { log: RenewalLog }) {
             </p>
           </div>
         </div>
-        {expanded ? (
-          <ChevronUp className="h-4 w-4 text-steel shrink-0" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-steel shrink-0" />
-        )}
+        <ChevronDown
+          className={`h-4 w-4 text-steel shrink-0 transition-transform duration-200 ease-out-quart ${expanded ? "rotate-180" : ""}`}
+        />
       </button>
 
-      {expanded && (
-        <div className="border-t border-hairline-soft px-5 py-4">
-          {log.errorMessage && (
-            <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2 mb-3 font-mono">
-              {log.errorMessage}
-            </p>
-          )}
+      {/* Grid-rows trick animates expansion without animating height directly */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-out-quart ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-hairline-soft px-5 py-4">
+            {log.errorMessage && (
+              <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2 mb-3 font-mono">
+                {log.errorMessage}
+              </p>
+            )}
 
-          {details && details.length > 0 ? (
-            <div className="space-y-2">
-              {details.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-body-sm">
-                  {item.success ? (
-                    <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-error shrink-0" />
-                  )}
-                  <span className="text-charcoal truncate">{item.title}</span>
-                  {item.errorMessage && (
-                    <span className="text-micro text-error ml-auto shrink-0">
-                      {item.errorMessage}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-body-sm text-steel">No details available</p>
-          )}
+            {details && details.length > 0 ? (
+              <div className="space-y-2">
+                {details.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 text-body-sm">
+                    {item.success ? (
+                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-error shrink-0" />
+                    )}
+                    <span className="text-charcoal truncate">{item.title}</span>
+                    {item.errorMessage && (
+                      <span className="text-micro text-error ml-auto shrink-0">
+                        {item.errorMessage}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-body-sm text-steel">No details available</p>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </Card>
   );
 }

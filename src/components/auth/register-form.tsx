@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { registerUser } from "@/server/actions/auth";
+import { Loader2 } from "lucide-react";
 
 export function RegisterForm() {
   const [error, setError] = useState("");
@@ -40,7 +41,7 @@ export function RegisterForm() {
   }
 
   return (
-    <Card variant="elevated" padding="lg">
+    <Card variant="elevated" padding="lg" className="animate-fade-up">
       <CardContent>
         <h2 className="font-display text-heading-1 font-medium text-ink text-center mb-1">
           Create your account
@@ -119,7 +120,7 @@ export function RegisterForm() {
           />
 
           {error && (
-            <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2">
+            <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2 animate-scale-in">
               {error}
             </p>
           )}
@@ -130,6 +131,7 @@ export function RegisterForm() {
             className="w-full mt-2"
             disabled={loading}
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>

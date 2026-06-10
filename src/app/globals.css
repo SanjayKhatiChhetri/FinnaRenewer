@@ -88,6 +88,19 @@
   --shadow-md: 0 4px 12px rgba(15, 15, 15, 0.08);
   --shadow-lg: 0 8px 24px rgba(15, 15, 15, 0.12);
   --shadow-xl: 0 16px 48px -8px rgba(15, 15, 15, 0.16);
+
+  /* ── Motion (ease-out curves — no bounce, no elastic) ───────────── */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Z-index scale (semantic, never arbitrary) ──────────────────── */
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-modal-backdrop: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+  --z-tooltip: 60;
 }
 
 /* ── Base Styles ──────────────────────────────────────────────────── */
@@ -186,5 +199,90 @@
   }
   .card-pastel-yellow {
     background-color: var(--color-tint-yellow);
+  }
+
+  /* Entrance: fade + rise. Default state is already visible (opacity
+     animates from 0 via keyframe, not gated on a JS class) so headless
+     and prefers-reduced-motion renders never ship blank. */
+  .animate-fade-up {
+    animation: fade-up 0.5s var(--ease-out-quint) both;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.18s var(--ease-out-quart) both;
+  }
+
+  /* List choreography: set style="--i:0|1|2…" on siblings. Capped so a
+     long list never exceeds ~500ms total reveal. */
+  .stagger {
+    animation-delay: calc(min(var(--i, 0), 9) * 45ms);
+  }
+
+  /* Gentle bob for empty-state illustrations. */
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+
+  /* Loading shimmer for skeletons (replaces mid-content spinners). */
+  .skeleton {
+    background: linear-gradient(
+      100deg,
+      var(--color-surface) 30%,
+      var(--color-surface-soft) 50%,
+      var(--color-surface) 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Accessibility: honor reduced-motion everywhere. Transitions/animations
+   collapse to near-instant; content stays fully visible. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

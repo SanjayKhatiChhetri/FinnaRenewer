@@ -2,7 +2,9 @@ import { forwardRef, type HTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const cardVariants = cva("rounded-lg transition-colors", {
+const cardVariants = cva(
+  "rounded-lg transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out-quart",
+  {
   variants: {
     variant: {
       base: "bg-canvas border border-hairline",

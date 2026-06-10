@@ -154,7 +154,7 @@ export function DashboardContent({
       {/* Renewal status */}
       {renewalStatus && (
         <div
-          className={`rounded-lg px-4 py-3 mb-6 flex items-start gap-3 ${
+          className={`rounded-lg px-4 py-3 mb-6 flex items-start gap-3 animate-fade-up ${
             renewalStatus.status === "success"
               ? "bg-tint-mint"
               : renewalStatus.status === "error" ||
@@ -262,13 +262,28 @@ export function DashboardContent({
               />
             )}
             {loans.length === 0 && (
-              <Card variant="flat" padding="lg">
-                <CardContent className="text-center py-8">
-                  <BookOpen className="h-10 w-10 text-stone mx-auto mb-3" />
-                  <p className="text-body text-slate">No loans found</p>
-                  <p className="text-micro text-steel mt-1">
-                    You don&apos;t have any items checked out right now.
+              <Card variant="flat" padding="lg" className="animate-fade-up">
+                <CardContent className="text-center py-10">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-tint-mint">
+                    <CheckCircle2 className="h-7 w-7 text-success" />
+                  </div>
+                  <p className="text-body-lg font-medium text-ink">
+                    You&apos;re all caught up
                   </p>
+                  <p className="text-body-sm text-slate mt-1 max-w-sm mx-auto">
+                    No items checked out right now. When you borrow from Finna,
+                    your loans appear here and renew automatically before they&apos;re due.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSync}
+                    disabled={syncing}
+                    className="mt-5"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                    Check again
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -317,7 +332,9 @@ function StatCard({
   tint: string;
 }) {
   return (
-    <div className={`${tint} rounded-lg p-4`}>
+    <div
+      className={`${tint} rounded-lg p-4 transition-transform duration-200 ease-out-quart hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`}
+    >
       <div className="flex items-center gap-2 text-slate mb-1">
         {icon}
         <span className="text-micro font-medium uppercase tracking-wider">
@@ -351,10 +368,11 @@ function LoanSection({
         <span className="text-micro text-steel">{loans.length} items</span>
       </div>
       <div className="space-y-3">
-        {loans.map((loan) => (
+        {loans.map((loan, i) => (
           <LoanCard
             key={`${loan.credentialId}-${loan.id}`}
             loan={loan}
+            index={i}
             variant={variant}
             onRenewed={onRenewed}
             showCardLabel={showCardLabel}
@@ -367,11 +385,13 @@ function LoanSection({
 
 function LoanCard({
   loan,
+  index,
   variant,
   onRenewed,
   showCardLabel,
 }: {
   loan: Loan;
+  index: number;
   variant: "error" | "warning" | "success";
   onRenewed: () => void;
   showCardLabel: boolean;
@@ -384,12 +404,12 @@ function LoanCard({
 
   const days = daysUntilDue(loan.dueDate);
 
-  const borderColor =
+  const dotColor =
     variant === "error"
-      ? "border-l-error"
+      ? "bg-error"
       : variant === "warning"
-        ? "border-l-warning"
-        : "border-l-success";
+        ? "bg-warning"
+        : "bg-success";
 
   async function handleRenew() {
     setRenewing(true);
@@ -413,7 +433,8 @@ function LoanCard({
     <Card
       variant="base"
       padding="none"
-      className={`border-l-[3px] ${borderColor} overflow-hidden`}
+      style={{ "--i": index } as React.CSSProperties}
+      className="overflow-hidden animate-fade-up stagger hover:shadow-md hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
     >
       <CardContent className="flex gap-4 p-4">
         {/* Cover image or placeholder */}
@@ -433,9 +454,15 @@ function LoanCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-body-sm font-medium text-ink leading-snug line-clamp-2">
-                {loan.title}
-              </p>
+              <div className="flex items-start gap-2">
+                <span
+                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dotColor}`}
+                  aria-hidden
+                />
+                <p className="text-body-sm font-medium text-ink leading-snug line-clamp-2">
+                  {loan.title}
+                </p>
+              </div>
               {loan.author && (
                 <p className="text-micro text-charcoal mt-0.5">
                   {loan.author}
@@ -511,7 +538,7 @@ function LoanCard({
           {/* Renewal feedback */}
           {renewResult && (
             <div
-              className={`mt-2 text-micro flex items-center gap-1 ${renewResult.success ? "text-success" : "text-error"}`}
+              className={`mt-2 text-micro flex items-center gap-1 animate-scale-in ${renewResult.success ? "text-success" : "text-error"}`}
             >
               {renewResult.success ? (
                 <CheckCircle2 className="h-3.5 w-3.5" />

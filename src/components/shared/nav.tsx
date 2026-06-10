@@ -27,8 +27,8 @@ export function Sidebar({ userName }: { userName?: string | null }) {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-hairline bg-canvas">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-hairline-soft">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft">
+      <div className="group flex items-center gap-3 px-6 py-5 border-b border-hairline-soft">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft transition-transform duration-200 ease-out-quart group-hover:-rotate-6 group-hover:scale-105 motion-reduce:group-hover:rotate-0 motion-reduce:group-hover:scale-100">
           <BookOpen className="h-5 w-5 text-primary" />
         </div>
         <div>
@@ -48,13 +48,18 @@ export function Sidebar({ userName }: { userName?: string | null }) {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-body-sm font-medium transition-colors",
+                "group flex items-center gap-3 px-3 py-2.5 rounded-md text-body-sm font-medium transition-colors duration-150",
                 active
                   ? "bg-primary-soft text-primary-deep"
                   : "text-slate hover:bg-surface hover:text-ink",
               )}
             >
-              <Icon className="h-[18px] w-[18px]" />
+              <Icon
+                className={cn(
+                  "h-[18px] w-[18px] transition-transform duration-200 ease-out-quart motion-reduce:transition-none",
+                  !active && "group-hover:scale-110 motion-reduce:group-hover:scale-100",
+                )}
+              />
               {label}
             </Link>
           );
@@ -126,12 +131,24 @@ export function MobileNav({ userName }: { userName?: string | null }) {
               key={href}
               href={href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
+                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors duration-150",
                 active ? "text-primary" : "text-steel",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon
+                className={cn(
+                  "h-5 w-5 transition-transform duration-200 ease-out-quart",
+                  active && "-translate-y-0.5 motion-reduce:translate-y-0",
+                )}
+              />
               {label}
+              <span
+                className={cn(
+                  "h-1 w-1 rounded-full transition-opacity duration-200",
+                  active ? "bg-primary opacity-100" : "opacity-0",
+                )}
+                aria-hidden
+              />
             </Link>
           );
         })}
