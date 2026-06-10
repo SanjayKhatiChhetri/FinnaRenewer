@@ -6,6 +6,11 @@ import { triggerSync } from "@/server/actions/sync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import {
+  AllCaughtUpIllustration,
+  SuccessSeal,
+} from "@/components/shared/illustrations";
 import { daysUntilDue, truncate } from "@/lib/utils";
 import {
   RefreshCw,
@@ -164,9 +169,9 @@ export function DashboardContent({
           }`}
         >
           {renewalStatus.status === "success" ? (
-            <CheckCircle2 className="h-5 w-5 text-success mt-0.5 shrink-0" />
+            <SuccessSeal className="h-8 w-8 -mt-0.5 shrink-0" />
           ) : (
-            <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
+            <AlertTriangle className="h-5 w-5 text-warning-deep mt-0.5 shrink-0" />
           )}
           <div>
             <p className="text-body-sm font-medium text-ink">
@@ -187,7 +192,7 @@ export function DashboardContent({
       {error && !syncing && (
         <Card variant="rose" padding="md" className="mb-6">
           <CardContent className="flex items-start gap-3">
-            <XCircle className="h-5 w-5 text-error shrink-0 mt-0.5" />
+            <XCircle className="h-5 w-5 text-error-deep shrink-0 mt-0.5" />
             <div>
               <p className="text-body-sm font-medium text-ink">
                 {error.includes("Rate limited") ? "Sync cooldown" : "Sync error"}
@@ -201,7 +206,7 @@ export function DashboardContent({
       {/* Syncing overlay */}
       {syncing && (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+          <Loader2 className="h-8 w-8 text-primary-deep animate-spin mb-4" />
           <p className="text-body-sm text-slate">
             Syncing with Finna…
           </p>
@@ -264,10 +269,8 @@ export function DashboardContent({
             {loans.length === 0 && (
               <Card variant="flat" padding="lg" className="animate-fade-up">
                 <CardContent className="text-center py-10">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-tint-mint">
-                    <CheckCircle2 className="h-7 w-7 text-success" />
-                  </div>
-                  <p className="text-body-lg font-medium text-ink">
+                  <AllCaughtUpIllustration className="mx-auto mb-5 w-44 animate-float" />
+                  <p className="font-display text-heading-2 font-medium text-ink">
                     You&apos;re all caught up
                   </p>
                   <p className="text-body-sm text-slate mt-1 max-w-sm mx-auto">
@@ -341,8 +344,8 @@ function StatCard({
           {label}
         </span>
       </div>
-      <p className="font-display text-heading-1 font-medium text-ink">
-        {value}
+      <p className="font-display text-heading-1 font-medium text-ink tabular-nums">
+        <AnimatedNumber value={value} />
       </p>
     </div>
   );
@@ -481,7 +484,7 @@ function LoanCard({
           {/* Metadata row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-micro text-steel">
             {showCardLabel && loan.cardLabel && (
-              <span className="inline-flex items-center gap-1 text-primary font-medium">
+              <span className="inline-flex items-center gap-1 text-primary-deep font-medium">
                 <CreditCard className="h-3 w-3" />
                 {loan.cardLabel}
               </span>

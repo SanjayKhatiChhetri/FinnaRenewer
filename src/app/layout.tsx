@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import { PWARegister } from "@/components/pwa-register";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
+  axes: ["opsz", "SOFT"],
 });
 
 const inter = Inter({
@@ -33,7 +35,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#5645d4",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fcfbf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#211c18" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -47,11 +52,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+      className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-screen bg-surface-soft">
-        {children}
-        <PWARegister />
+        <ThemeProvider>
+          {children}
+          <PWARegister />
+        </ThemeProvider>
       </body>
     </html>
   );

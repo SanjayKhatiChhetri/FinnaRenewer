@@ -99,7 +99,7 @@ export function LoginForm() {
           />
 
           {error && (
-            <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2 animate-scale-in">
+            <p className="text-body-sm text-error-deep bg-error-soft rounded-md px-3 py-2 animate-scale-in">
               {error}
             </p>
           )}
@@ -119,7 +119,7 @@ export function LoginForm() {
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-primary hover:text-primary-hover font-medium"
+            className="text-primary-deep hover:text-primary font-medium"
           >
             Sign up
           </Link>

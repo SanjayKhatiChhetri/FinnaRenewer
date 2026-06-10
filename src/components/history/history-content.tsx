@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Zap,
 } from "lucide-react";
-import { BookshelfIllustration } from "@/components/shared/illustrations";
+import { QuietShelfIllustration } from "@/components/shared/illustrations";
 
 interface RenewalLog {
   id: string;
@@ -28,16 +28,16 @@ export function HistoryContent({ logs }: { logs: RenewalLog[] }) {
   return (
     <div>
       <h1 className="font-display text-display font-medium text-ink mb-2">
-        Renewal History
+        Renewal history
       </h1>
       <p className="text-body text-slate mb-8">
-        A log of all past renewal attempts.
+        A log of every renewal we&apos;ve run for you.
       </p>
 
       {logs.length === 0 ? (
         <Card variant="flat" padding="lg" className="animate-fade-up">
           <CardContent className="text-center py-12">
-            <BookshelfIllustration className="w-44 mx-auto mb-4 animate-float" />
+            <QuietShelfIllustration className="w-44 mx-auto mb-4 animate-float" />
             <p className="text-body-lg font-medium text-ink">
               The shelf is quiet — for now
             </p>
@@ -125,7 +125,7 @@ function HistoryItem({ log, index }: { log: RenewalLog; index: number }) {
         <div className="overflow-hidden">
           <div className="border-t border-hairline-soft px-5 py-4">
             {log.errorMessage && (
-              <p className="text-body-sm text-error bg-error-soft rounded-md px-3 py-2 mb-3 font-mono">
+              <p className="text-body-sm text-error-deep bg-error-soft rounded-md px-3 py-2 mb-3 font-mono">
                 {log.errorMessage}
               </p>
             )}

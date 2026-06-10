@@ -1,79 +1,212 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════
-   FINNA RENEWER — Design System
-   Typography: Cohere-inspired (Space Grotesk display / Inter body)
-   Colors: Notion-inspired pastels + warm surfaces
+   FINNA RENEWER — "Reading Room" Design System
+   Aesthetic: editorial / literary. Ink-on-paper warmth, one committed
+   garnet accent (a book spine / library stamp), gold for earned delight.
+   Typography: Fraunces (serif display) + Inter (body) + JetBrains Mono.
+   Dual theme: Reading Room (light) · Dusk (dark).
+
+   Tokens are runtime CSS vars in :root / .dark; @theme inline binds the
+   Tailwind color utilities to them, so every `bg-primary` / `text-ink`
+   class re-themes for free. Tokens are the single source of truth —
+   never hard-code a value that lives here.
    ═══════════════════════════════════════════════════════════════════ */
 
-@theme {
-  /* ── Brand & Primary ────────────────────────────────────────────── */
-  --color-primary: #5645d4;
-  --color-primary-hover: #4534b3;
-  --color-primary-deep: #3a2a99;
-  --color-primary-soft: #e6e0f5;
-  --color-on-primary: #ffffff;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* ── Surfaces (Notion warm whites) ──────────────────────────────── */
-  --color-canvas: #ffffff;
-  --color-surface: #f6f5f4;
-  --color-surface-soft: #fafaf9;
-  --color-surface-raised: #ffffff;
+/* ── Reading Room (light) ─────────────────────────────────────────── */
+:root {
+  color-scheme: light;
 
-  /* ── Borders ────────────────────────────────────────────────────── */
-  --color-hairline: #e5e3df;
-  --color-hairline-soft: #ede9e4;
-  --color-hairline-strong: #c8c4be;
+  /* Brand — garnet (book spine) */
+  --primary: oklch(0.47 0.16 24);
+  --primary-hover: oklch(0.42 0.16 24);
+  --primary-deep: oklch(0.36 0.14 24);
+  --primary-soft: oklch(0.93 0.042 26);
+  --on-primary: oklch(0.99 0.004 80);
 
-  /* ── Text (Notion warm charcoals) ───────────────────────────────── */
-  --color-ink: #1a1a1a;
-  --color-charcoal: #37352f;
-  --color-slate: #5d5b54;
-  --color-steel: #787671;
-  --color-stone: #a4a097;
-  --color-muted: #bbb8b1;
+  /* Accent — antique gold (earned delight only) */
+  --accent: oklch(0.66 0.11 72);
+  --accent-soft: oklch(0.93 0.05 84);
 
-  /* ── Pastel Tints (Notion feature cards) ────────────────────────── */
-  --color-tint-peach: #ffe8d4;
-  --color-tint-rose: #fde0ec;
-  --color-tint-mint: #d9f3e1;
-  --color-tint-lavender: #e6e0f5;
-  --color-tint-sky: #dcecfa;
-  --color-tint-yellow: #fef7d6;
-  --color-tint-cream: #f8f5e8;
+  /* Surfaces — paper, very-low-chroma warm (not cream-band) */
+  --canvas: oklch(0.992 0.003 80);
+  --surface: oklch(0.957 0.005 80);
+  --surface-soft: oklch(0.975 0.004 80);
+  --surface-raised: oklch(1 0 0);
 
-  /* ── Semantic ───────────────────────────────────────────────────── */
-  --color-success: #1aae39;
-  --color-success-soft: #d9f3e1;
-  --color-warning: #dd5b00;
-  --color-warning-soft: #ffe8d4;
-  --color-error: #e03131;
-  --color-error-soft: #fde0ec;
-  --color-info: #5865f2;
-  --color-info-soft: #dcecfa;
+  /* Borders */
+  --hairline: oklch(0.9 0.006 75);
+  --hairline-soft: oklch(0.93 0.005 75);
+  --hairline-strong: oklch(0.82 0.008 70);
 
-  /* ── Typography (Cohere-inspired scale) ─────────────────────────── */
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  /* Text — warm ink ramp */
+  --ink: oklch(0.22 0.01 55);
+  --charcoal: oklch(0.3 0.012 50);
+  --slate: oklch(0.46 0.012 50);
+  --steel: oklch(0.51 0.011 50);
+  --stone: oklch(0.62 0.009 55);
+  --muted: oklch(0.74 0.007 60);
+
+  /* Editorial tints (replace Notion candy) — keep token names for the
+     Card API; recolored to a muted paper/ink-wash family */
+  --tint-peach: oklch(0.93 0.038 55);
+  --tint-rose: oklch(0.91 0.045 18);
+  --tint-mint: oklch(0.92 0.04 155);
+  --tint-lavender: oklch(0.91 0.038 285);
+  --tint-sky: oklch(0.92 0.04 235);
+  --tint-yellow: oklch(0.93 0.05 88);
+  --tint-cream: oklch(0.95 0.022 86);
+
+  /* Semantic */
+  --success: oklch(0.52 0.12 150);
+  --success-soft: oklch(0.92 0.04 155);
+  --success-deep: oklch(0.41 0.1 150);
+  --warning: oklch(0.55 0.12 62);
+  --warning-soft: oklch(0.93 0.05 88);
+  --warning-deep: oklch(0.43 0.1 58);
+  --error: oklch(0.53 0.2 25);
+  --error-soft: oklch(0.91 0.045 18);
+  --error-deep: oklch(0.45 0.18 25);
+  --info: oklch(0.5 0.12 250);
+  --info-soft: oklch(0.92 0.04 235);
+  --info-deep: oklch(0.42 0.13 250);
+
+  /* Elevation — soft ink shadows */
+  --shadow-xs: 0 1px 2px oklch(0.2 0.02 50 / 0.05);
+  --shadow-sm: 0 2px 6px oklch(0.2 0.02 50 / 0.07);
+  --shadow-md: 0 6px 18px oklch(0.2 0.02 50 / 0.09);
+  --shadow-lg: 0 12px 32px oklch(0.2 0.02 50 / 0.12);
+  --shadow-xl: 0 20px 56px -10px oklch(0.2 0.02 50 / 0.18);
+}
+
+/* ── Dusk (dark) — cozy low-light reading room ────────────────────── */
+.dark {
+  color-scheme: dark;
+
+  --primary: oklch(0.48 0.185 27);
+  --primary-hover: oklch(0.53 0.185 27);
+  --primary-deep: oklch(0.86 0.08 32);
+  --primary-soft: oklch(0.33 0.08 26);
+  --on-primary: oklch(0.99 0.004 80);
+
+  --accent: oklch(0.8 0.12 76);
+  --accent-soft: oklch(0.36 0.06 78);
+
+  --canvas: oklch(0.19 0.012 60);
+  --surface: oklch(0.24 0.014 60);
+  --surface-soft: oklch(0.215 0.013 60);
+  --surface-raised: oklch(0.26 0.015 60);
+
+  --hairline: oklch(0.32 0.014 60);
+  --hairline-soft: oklch(0.28 0.013 60);
+  --hairline-strong: oklch(0.42 0.016 60);
+
+  --ink: oklch(0.95 0.01 85);
+  --charcoal: oklch(0.88 0.012 80);
+  --slate: oklch(0.72 0.013 70);
+  --steel: oklch(0.62 0.012 65);
+  --stone: oklch(0.52 0.011 60);
+  --muted: oklch(0.44 0.01 60);
+
+  --tint-peach: oklch(0.31 0.04 55);
+  --tint-rose: oklch(0.31 0.05 18);
+  --tint-mint: oklch(0.3 0.045 155);
+  --tint-lavender: oklch(0.31 0.045 285);
+  --tint-sky: oklch(0.31 0.045 235);
+  --tint-yellow: oklch(0.32 0.05 88);
+  --tint-cream: oklch(0.29 0.022 86);
+
+  --success: oklch(0.74 0.15 152);
+  --success-soft: oklch(0.3 0.045 155);
+  --success-deep: oklch(0.85 0.13 152);
+  --warning: oklch(0.79 0.12 72);
+  --warning-soft: oklch(0.32 0.05 88);
+  --warning-deep: oklch(0.87 0.11 80);
+  --error: oklch(0.7 0.18 26);
+  --error-soft: oklch(0.31 0.05 18);
+  --error-deep: oklch(0.83 0.13 26);
+  --info: oklch(0.72 0.13 250);
+  --info-soft: oklch(0.31 0.045 235);
+  --info-deep: oklch(0.83 0.11 250);
+
+  /* Elevation — in dark, lean on glow + deeper drop */
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.4);
+  --shadow-sm: 0 2px 6px oklch(0 0 0 / 0.45);
+  --shadow-md: 0 6px 18px oklch(0 0 0 / 0.5);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.55);
+  --shadow-xl: 0 20px 56px -10px oklch(0 0 0 / 0.6);
+}
+
+@theme inline {
+  /* ── Color bindings (re-theme via :root / .dark) ────────────────── */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-hairline-strong: var(--hairline-strong);
+
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-slate: var(--slate);
+  --color-steel: var(--steel);
+  --color-stone: var(--stone);
+  --color-muted: var(--muted);
+
+  --color-tint-peach: var(--tint-peach);
+  --color-tint-rose: var(--tint-rose);
+  --color-tint-mint: var(--tint-mint);
+  --color-tint-lavender: var(--tint-lavender);
+  --color-tint-sky: var(--tint-sky);
+  --color-tint-yellow: var(--tint-yellow);
+  --color-tint-cream: var(--tint-cream);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-deep: var(--success-deep);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-deep: var(--warning-deep);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-error-deep: var(--error-deep);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-deep: var(--info-deep);
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  --font-display: "Fraunces", "Georgia", "Times New Roman", serif;
   --font-body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
-  --text-display-xl: 3.5rem; /* 56px */
-  --text-display-lg: 3rem; /* 48px */
-  --text-display: 2.25rem; /* 36px */
-  --text-heading-1: 1.75rem; /* 28px */
-  --text-heading-2: 1.5rem; /* 24px */
-  --text-heading-3: 1.25rem; /* 20px */
-  --text-body-lg: 1.125rem; /* 18px */
-  --text-body: 1rem; /* 16px */
-  --text-body-sm: 0.875rem; /* 14px */
-  --text-caption: 0.8125rem; /* 13px */
-  --text-micro: 0.75rem; /* 12px */
+  --text-display-xl: 3.5rem;
+  --text-display-lg: 3rem;
+  --text-display: 2.25rem;
+  --text-heading-1: 1.75rem;
+  --text-heading-2: 1.5rem;
+  --text-heading-3: 1.25rem;
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.8125rem;
+  --text-micro: 0.75rem;
 
-  /* ── Spacing (semantic aliases — use Tailwind built-in scale for p/m/gap) */
-  --spacing-section: 4rem; /* 64px */
-  --spacing-hero: 6rem; /* 96px */
+  --spacing-section: 4rem;
+  --spacing-hero: 6rem;
 
-  /* ── Border Radius ──────────────────────────────────────────────── */
+  /* ── Shape ──────────────────────────────────────────────────────── */
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -82,14 +215,14 @@
   --radius-2xl: 20px;
   --radius-pill: 9999px;
 
-  /* ── Shadows (Notion elevation) ─────────────────────────────────── */
-  --shadow-xs: 0 1px 2px rgba(15, 15, 15, 0.04);
-  --shadow-sm: 0 2px 4px rgba(15, 15, 15, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 15, 15, 0.08);
-  --shadow-lg: 0 8px 24px rgba(15, 15, 15, 0.12);
-  --shadow-xl: 0 16px 48px -8px rgba(15, 15, 15, 0.16);
+  /* ── Elevation (bound to themed vars above) ─────────────────────── */
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
 
-  /* ── Motion (ease-out curves — no bounce, no elastic) ───────────── */
+  /* ── Motion ─────────────────────────────────────────────────────── */
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -129,13 +262,14 @@
     font-family: var(--font-display);
     color: var(--color-ink);
     letter-spacing: -0.02em;
-    line-height: 1.2;
-    font-weight: 500;
+    line-height: 1.1;
+    font-weight: 480;
+    font-optical-sizing: auto;
   }
 
   h1 {
     font-size: var(--text-display-lg);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
   }
   h2 {
     font-size: var(--text-display);
@@ -160,6 +294,20 @@
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-hairline-strong);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: var(--radius-pill);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-steel);
+  }
 }
 
 /* ── Utility Classes ──────────────────────────────────────────────── */
@@ -167,7 +315,7 @@
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-optical-sizing: auto;
   }
 
   .font-body {
@@ -180,6 +328,9 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
   }
 
   .card-pastel-peach {
@@ -201,9 +352,19 @@
     background-color: var(--color-tint-yellow);
   }
 
-  /* Entrance: fade + rise. Default state is already visible (opacity
-     animates from 0 via keyframe, not gated on a JS class) so headless
-     and prefers-reduced-motion renders never ship blank. */
+  /* Paper grain — a faint tactile texture for hero / large surfaces.
+     Theme-aware via currentColor-style opacity over the surface. */
+  .paper-grain {
+    background-image: radial-gradient(
+      oklch(0.5 0.02 60 / 0.025) 0.5px,
+      transparent 0.5px
+    );
+    background-size: 4px 4px;
+  }
+
+  /* Entrance: fade + rise. Default state already visible (opacity
+     animates from a keyframe, not gated on a JS class) so headless and
+     reduced-motion renders never ship blank. */
   .animate-fade-up {
     animation: fade-up 0.5s var(--ease-out-quint) both;
   }
@@ -218,12 +379,10 @@
     animation-delay: calc(min(var(--i, 0), 9) * 45ms);
   }
 
-  /* Gentle bob for empty-state illustrations. */
   .animate-float {
     animation: float 5s ease-in-out infinite;
   }
 
-  /* Loading shimmer for skeletons (replaces mid-content spinners). */
   .skeleton {
     background: linear-gradient(
       100deg,
@@ -274,8 +433,7 @@
   }
 }
 
-/* Accessibility: honor reduced-motion everywhere. Transitions/animations
-   collapse to near-instant; content stays fully visible. */
+/* Accessibility: honor reduced-motion everywhere. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

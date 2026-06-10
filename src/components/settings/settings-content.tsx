@@ -76,7 +76,7 @@ function LibraryCardsSection({ cards }: { cards: LinkedCard[] }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-tint-lavender">
-              <CreditCard className="h-5 w-5 text-primary" />
+              <CreditCard className="h-5 w-5 text-primary-deep" />
             </div>
             <div>
               <CardTitle className="text-heading-3">Library Cards</CardTitle>
@@ -137,7 +137,7 @@ function LinkedCardRow({ card }: { card: LinkedCard }) {
   return (
     <div className="flex items-center justify-between rounded-md bg-surface px-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
-        <BookOpen className="h-4 w-4 text-primary shrink-0" />
+        <BookOpen className="h-4 w-4 text-primary-deep shrink-0" />
         <div className="min-w-0">
           <p className="text-body-sm font-medium text-charcoal truncate">
             {card.label || card.instanceName}
@@ -263,8 +263,8 @@ function LinkCardForm({
         <p
           className={`mt-3 text-body-sm rounded-md px-3 py-2 ${
             message.type === "success"
-              ? "bg-tint-mint text-success"
-              : "bg-tint-rose text-error"
+              ? "bg-tint-mint text-success-deep"
+              : "bg-tint-rose text-error-deep"
           }`}
         >
           {message.text}

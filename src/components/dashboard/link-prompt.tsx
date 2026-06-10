@@ -53,7 +53,7 @@ export function LinkPrompt() {
                 className="animate-fade-up stagger rounded-lg bg-canvas/70 p-4 text-left"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-soft text-primary">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-soft text-primary-deep">
                     <Icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="font-display text-body-sm font-medium text-ink">

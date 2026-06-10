@@ -8,12 +8,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-primary text-white hover:bg-primary-hover rounded-pill shadow-xs hover:shadow-md",
+          "bg-primary text-on-primary hover:bg-primary-hover rounded-pill shadow-xs hover:shadow-md",
         secondary:
-          "bg-transparent text-ink border border-hairline-strong hover:bg-surface hover:border-hairline-strong rounded-md",
+          "bg-transparent text-ink border border-hairline-strong hover:bg-surface hover:border-hairline-strong rounded-pill",
         ghost: "bg-transparent text-ink hover:bg-surface rounded-md",
-        danger: "bg-error text-white hover:bg-error/90 rounded-pill shadow-xs hover:shadow-md",
-        link: "bg-transparent text-primary hover:text-primary-hover underline-offset-4 hover:underline p-0 h-auto active:scale-100",
+        accent:
+          "bg-accent text-ink hover:brightness-105 rounded-pill shadow-xs hover:shadow-md",
+        danger:
+          "bg-error text-on-primary hover:brightness-110 rounded-pill shadow-xs hover:shadow-md",
+        link: "bg-transparent text-primary-deep hover:text-primary underline-offset-4 hover:underline p-0 h-auto active:scale-100",
       },
       size: {
         sm: "h-8 px-3 text-body-sm",

@@ -66,6 +66,8 @@ Decisions made during development, with context. When you revisit a decision, up
 
 **Gotcha**: Tailwind v4 `@theme` namespaces map directly to utility classes. Custom `--spacing-*` values collide with `max-w-*`, `w-*`, etc. See GOTCHAS.md. We removed the overlapping custom spacing values.
 
+**Update (ADR-009)**: The Notion-pastel + Cohere-typography direction was replaced by the "Reading Room" editorial system. The CVA component approach and `@theme` token model are unchanged.
+
 ---
 
 ## ADR-006: Dual notification channels (Discord + Web Push)
@@ -101,3 +103,41 @@ Decisions made during development, with context. When you revisit a decision, up
 **Trade-off**: If a loan has <7 days remaining when first borrowed, it might not be renewed until the next cycle. The `renew_days_before` setting (1-14) mitigates this — users with short-term loans can increase the threshold.
 
 **Future**: Vercel Cron on Hobby plan only supports 1 cron job. If we need daily checks, either upgrade the plan or have users trigger manual renewals from the dashboard (already implemented).
+
+---
+
+## ADR-009: "Reading Room" editorial rebrand
+
+**Decision**: Replace the purple-SaaS + Notion-pastel look with an editorial "Reading Room" identity — serif display (Fraunces), a committed garnet accent (book-spine / library-stamp), gold for earned delight, on a restrained paper/ink base.
+
+**Context**: The old UI was clean but generic; its purple `#5645d4` and geometric sans could have been any SaaS tool and didn't express the brand `PRODUCT.md` calls for — "a warm, bookish library companion." The user asked for a full transformation of color, type, and feel.
+
+**Consequence**: New OKLCH token palette; Fraunces + Inter + JetBrains Mono. The `@theme` token model and CVA components are reused, so most surfaces re-themed for free.
+
+**Trade-off**: Brand color identity changed wholesale (no migration path for users used to purple). Accepted — it's a personal tool and the brief was explicit. Avoided the AI cream-band reflex by carrying warmth through type/accent/illustration, not a tinted body bg.
+
+---
+
+## ADR-010: Dual theme via next-themes + theme-flipping `*-deep` tokens
+
+**Decision**: Ship light (Reading Room) + dark (Dusk) themes using `next-themes` (class strategy, system default) and Tailwind v4 `@custom-variant dark`. Tokens are runtime CSS vars under `:root` / `.dark`, bound through `@theme inline`.
+
+**Context**: One accent hue can't read as foreground on both a light and a dark surface. Colored text on `*-soft` / tinted backgrounds washed out (e.g. error-on-error-soft measured ~2.3:1).
+
+**Consequence**: Added `*-deep` foreground tokens (`primary/success/warning/error/info`) that **flip per theme** — deep shade in light, light shade in Dusk. Foreground-on-tint always uses `*-deep`; base colors are fills or foreground-on-canvas only. All text verified ≥ WCAG AA in both themes.
+
+**Trade-off**: Two values per semantic role to maintain, and a discipline rule contributors must follow (documented in DESIGN-SYSTEM.md). `next-themes` adds one dependency and requires `suppressHydrationWarning` on `<html>`.
+
+**Gotcha**: `@theme inline` *inlines* token values into utilities and does **not** emit matching `:root` custom properties — so runtime `getComputedStyle(var(--color-*))` reads can be misleading. Verify contrast against the rendered utility color, not the namespaced var.
+
+---
+
+## ADR-011: `motion` library for animation
+
+**Decision**: Add `motion` (Framer Motion, `motion/react`) for page transitions, `layoutId` nav indicators, list stagger, scroll reveals, stat count-ups, and the theme-toggle.
+
+**Context**: The brief wanted rich, first-class motion. CSS keyframes alone can't do shared-element (`layoutId`) transitions, spring physics, or scroll-linked reveals cleanly.
+
+**Consequence**: Shared variants in `src/lib/motion.ts` mirror the CSS ease tokens. Every animation is gated on `useReducedMotion`; the global `prefers-reduced-motion` block remains the backstop.
+
+**Trade-off**: One client-side dependency (~adds to First Load JS on animated routes). Accepted for the UX gain; static/server components are unaffected.

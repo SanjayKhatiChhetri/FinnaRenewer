@@ -5,6 +5,7 @@ import { triggerSync } from "@/server/actions/sync";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   BookmarkCheck,
   Clock,
@@ -109,7 +110,7 @@ export function AccountContent({
 
       {syncing && (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+          <Loader2 className="h-8 w-8 text-primary-deep animate-spin mb-4" />
           <p className="text-body-sm text-slate">
             Syncing with Finna…
           </p>
@@ -117,36 +118,22 @@ export function AccountContent({
       )}
 
       {!syncing && (
-        <div className="space-y-6">
-          {/* Stats row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-tint-lavender rounded-lg p-4">
-              <div className="flex items-center gap-2 text-slate mb-1">
-                <BookmarkCheck className="h-4 w-4" />
-                <span className="text-micro font-medium uppercase tracking-wider">
-                  Holds
-                </span>
-              </div>
-              <p className="font-display text-heading-1 font-medium text-ink">
-                {holds.length}
-              </p>
-            </div>
-            <div className={`rounded-lg p-4 ${fines.length > 0 ? "bg-tint-rose" : "bg-tint-mint"}`}>
-              <div className="flex items-center gap-2 text-slate mb-1">
-                <Banknote className="h-4 w-4" />
-                <span className="text-micro font-medium uppercase tracking-wider">
-                  Fines
-                </span>
-              </div>
-              <p className="font-display text-heading-1 font-medium text-ink">
-                {fines.length}
-              </p>
-            </div>
-          </div>
-
-          <HoldsSection holds={holds} error={holdsError} />
-          <FinesSection fines={fines} error={finesError} />
-        </div>
+        <Tabs defaultValue="holds">
+          <TabsList className="mb-6">
+            <TabsTrigger value="holds" count={holds.length}>
+              Holds
+            </TabsTrigger>
+            <TabsTrigger value="fines" count={fines.length}>
+              Fines
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="holds">
+            <HoldsSection holds={holds} error={holdsError} />
+          </TabsContent>
+          <TabsContent value="fines">
+            <FinesSection fines={fines} error={finesError} />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
@@ -184,7 +171,7 @@ function HoldsSection({ holds, error }: { holds: Hold[]; error: string }) {
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-tint-lavender">
-            <BookmarkCheck className="h-5 w-5 text-primary" />
+            <BookmarkCheck className="h-5 w-5 text-primary-deep" />
           </div>
           <div>
             <CardTitle className="text-heading-3">Holds</CardTitle>
@@ -199,7 +186,7 @@ function HoldsSection({ holds, error }: { holds: Hold[]; error: string }) {
       <CardContent>
         {error && (
           <div className="flex items-start gap-3 rounded-lg bg-tint-rose px-4 py-3">
-            <XCircle className="h-5 w-5 text-error shrink-0 mt-0.5" />
+            <XCircle className="h-5 w-5 text-error-deep shrink-0 mt-0.5" />
             <p className="text-body-sm text-charcoal">{error}</p>
           </div>
         )}
@@ -245,7 +232,7 @@ function HoldCard({ hold }: { hold: Hold }) {
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-micro text-steel">
           {hold.cardLabel && (
-            <span className="inline-flex items-center gap-1 text-primary font-medium">
+            <span className="inline-flex items-center gap-1 text-primary-deep font-medium">
               <CreditCard className="h-3 w-3" />
               {hold.cardLabel}
             </span>
@@ -276,7 +263,7 @@ function HoldCard({ hold }: { hold: Hold }) {
           href={hold.recordUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 p-1.5 rounded-md text-steel hover:text-primary transition-colors"
+          className="shrink-0 p-1.5 rounded-md text-steel hover:text-primary-deep transition-colors"
         >
           <ExternalLink className="h-4 w-4" />
         </a>
@@ -297,7 +284,7 @@ function FinesSection({ fines, error }: { fines: Fine[]; error: string }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${fines.length > 0 ? "bg-tint-rose" : "bg-tint-mint"}`}>
-              <Banknote className={`h-5 w-5 ${fines.length > 0 ? "text-error" : "text-success"}`} />
+              <Banknote className={`h-5 w-5 ${fines.length > 0 ? "text-error-deep" : "text-success-deep"}`} />
             </div>
             <div>
               <CardTitle className="text-heading-3">Fines</CardTitle>
@@ -318,7 +305,7 @@ function FinesSection({ fines, error }: { fines: Fine[]; error: string }) {
       <CardContent>
         {error && (
           <div className="flex items-start gap-3 rounded-lg bg-tint-rose px-4 py-3">
-            <XCircle className="h-5 w-5 text-error shrink-0 mt-0.5" />
+            <XCircle className="h-5 w-5 text-error-deep shrink-0 mt-0.5" />
             <p className="text-body-sm text-charcoal">{error}</p>
           </div>
         )}
@@ -363,7 +350,7 @@ function FineCard({ fine }: { fine: Fine }) {
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-micro text-steel">
           {fine.cardLabel && (
-            <span className="inline-flex items-center gap-1 text-primary font-medium">
+            <span className="inline-flex items-center gap-1 text-primary-deep font-medium">
               <CreditCard className="h-3 w-3" />
               {fine.cardLabel}
             </span>
@@ -388,7 +375,7 @@ function FineCard({ fine }: { fine: Fine }) {
             href={fine.recordUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-md text-steel hover:text-primary transition-colors"
+            className="p-1.5 rounded-md text-steel hover:text-primary-deep transition-colors"
           >
             <ExternalLink className="h-4 w-4" />
           </a>

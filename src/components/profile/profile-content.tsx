@@ -75,7 +75,7 @@ function ProfileCard({ profile }: { profile: UserProfile }) {
               />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft ring-2 ring-hairline-soft">
-                <span className="font-display text-heading-2 font-medium text-primary">
+                <span className="font-display text-heading-2 font-medium text-primary-deep">
                   {(profile.name ?? profile.email)[0].toUpperCase()}
                 </span>
               </div>
