@@ -58,16 +58,16 @@ export function Landing() {
     <div className="min-h-screen bg-surface-soft">
       {/* Header */}
       <header className="sticky top-0 z-(--z-sticky) border-b border-hairline-soft bg-surface-soft/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-          <Link href="/" className="group flex items-center gap-2.5">
-            <ExLibris className="h-9 w-9 transition-transform duration-300 ease-out-quart group-hover:-rotate-6 motion-reduce:group-hover:rotate-0" />
-            <span className="font-display text-body-lg font-medium text-ink">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-3.5">
+          <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-2.5">
+            <ExLibris className="h-8 w-8 shrink-0 transition-transform duration-300 ease-out-quart group-hover:-rotate-6 motion-reduce:group-hover:rotate-0 sm:h-9 sm:w-9" />
+            <span className="truncate font-display text-body font-medium text-ink sm:text-body-lg">
               Finna Renewer
             </span>
           </Link>
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
             <ThemeToggle />
-            <Link href="/login">
+            <Link href="/login" className="hidden sm:block">
               <Button variant="ghost" size="sm">
                 Log in
               </Button>

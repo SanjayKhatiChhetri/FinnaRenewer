@@ -114,7 +114,7 @@ export function MobileNav({ userName }: { userName?: string | null }) {
   return (
     <>
       {/* Top bar */}
-      <header className="sticky top-0 z-(--z-sticky) flex items-center justify-between border-b border-hairline bg-canvas/85 px-4 py-3 backdrop-blur-md md:hidden">
+      <header className="sticky top-0 z-(--z-sticky) flex items-center justify-between border-b border-hairline bg-canvas/85 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md md:hidden">
         <Link href="/dashboard" className="flex items-center gap-2">
           <ExLibris className="h-8 w-8" />
           <span className="font-display text-body font-medium text-ink">
@@ -141,7 +141,7 @@ export function MobileNav({ userName }: { userName?: string | null }) {
       </header>
 
       {/* Bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-(--z-sticky) flex border-t border-hairline bg-canvas/90 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-(--z-sticky) flex border-t border-hairline bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (

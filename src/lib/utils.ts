@@ -1,5 +1,34 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// Our custom font-size tokens (--text-*) share the `text-*` prefix with color
+// utilities. Without this, tailwind-merge treats `text-body-sm` and
+// `text-on-primary` as the same group and silently drops one — which stripped
+// button text colors. Registering the sizes keeps size and color in separate
+// groups so both survive.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "display-xl",
+            "display-lg",
+            "display",
+            "heading-1",
+            "heading-2",
+            "heading-3",
+            "body-lg",
+            "body",
+            "body-sm",
+            "caption",
+            "micro",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

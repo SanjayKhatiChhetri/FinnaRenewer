@@ -20,7 +20,7 @@ export default async function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <MobileNav userName={session.user?.name} />
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <main className="flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
           <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-10">
             {children}
           </div>
