@@ -150,6 +150,8 @@ Decisions made during development, with context. When you revisit a decision, up
 
 **Context**: From 2026-11-16 Finna's Cloudflare answers every request from Vercel/AWS IPs with a JS challenge (HTTP 403, `cf-mitigated: challenge`). No header change gets past it. The same request from the home connection gets 200. The Nov 16 renewal and every sync after it failed.
 
-**Trade-off**: Jobs depend on T15 being up. `Persistent=true` on the timers runs a missed job when the host comes back. User actions in the web app (manual renew, refresh) still go out from Vercel and stay blocked until they are routed through a home-network relay too.
+**User actions**: Manual renew, refresh, holds, fines and linking a library run on Vercel. They reach Finna through `finna-relay` on the same LXC, exposed via a Cloudflare Tunnel. `src/server/finna/relay.ts` switches `fetchWithRetry` to the relay when `FINNA_RELAY_URL` is set. The relay checks a bearer secret and only fetches `https://*.finna.fi`.
 
-**Deploy**: `deploy/homelab/deploy.sh` ships the committed HEAD and the five runtime env vars, rebuilds the image and re-enables the timers.
+**Trade-off**: Jobs and user actions depend on T15 being up. `Persistent=true` on the timers runs a missed job when the host comes back. User actions fail while T15 or the tunnel is down. Finna session cookies pass through the relay, but credentials are only decrypted on Vercel or in the job.
+
+**Deploy**: `deploy/homelab/deploy.sh` ships the committed HEAD and the five runtime env vars, rebuilds the image, restarts relay + tunnel and re-enables the timers. Persistent secrets (`relay.env`, `cf_tunnel_token`) live in `/etc/finna-renewer/` on the LXC.

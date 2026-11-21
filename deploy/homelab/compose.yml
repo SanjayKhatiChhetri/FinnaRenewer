@@ -4,5 +4,24 @@ services:
       context: ../..
       dockerfile: deploy/homelab/Dockerfile
     image: finna-renewer-job
+    entrypoint: ["node", "/app/background-job.cjs"]
     env_file: job.env
     restart: "no"
+    profiles: ["job"]
+
+  relay:
+    image: finna-renewer-job
+    command: ["node", "/app/finna-relay.cjs"]
+    env_file: /etc/finna-renewer/relay.env
+    restart: unless-stopped
+
+  # Public entry for Vercel. The tunnel's hostname → http://relay:8787 route lives in the Cloudflare dashboard.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.1@sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN_FILE: /run/secrets/cf_tunnel_token
+    volumes:
+      - /etc/finna-renewer/cf_tunnel_token:/run/secrets/cf_tunnel_token:ro
+    depends_on: [relay]
+    restart: unless-stopped

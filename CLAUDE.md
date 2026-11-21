@@ -107,6 +107,11 @@ Required in `.env.local` (and Vercel dashboard):
 - `VAPID_PRIVATE_KEY` — Web Push private key
 - `VAPID_SUBJECT` — mailto: for VAPID
 
+Required on Vercel only (Finna blocks Vercel IPs, see ADR-012):
+
+- `FINNA_RELAY_URL` — Public URL of the homelab relay
+- `FINNA_RELAY_SECRET` — Bearer secret, matches `/etc/finna-renewer/relay.env` on LXC 102
+
 Optional:
 
 - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — Google OAuth

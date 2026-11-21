@@ -8,6 +8,5 @@ COPY scripts ./scripts
 RUN npm run job:bundle
 
 FROM node:24-slim
-COPY --from=build /app/dist/background-job.cjs /app/background-job.cjs
+COPY --from=build /app/dist/ /app/
 USER node
-ENTRYPOINT ["node", "/app/background-job.cjs"]

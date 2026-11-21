@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { FinnaSession, FinnaInstance, FinnaInstanceId } from "./types";
 import { getFinnaInstance, DEFAULT_INSTANCE } from "./instances";
+import { finnaHttp } from "./relay";
 
 const BASE_HEADERS: Record<string, string> = {
   "User-Agent":
@@ -34,7 +35,7 @@ function mergeCookies(existing: string, fresh: string): string {
 
 export async function fetchWithRetry(
   url: string,
-  init: RequestInit & { cookies?: string } = {},
+  init: Omit<RequestInit, "body"> & { body?: string; cookies?: string } = {},
   maxAttempts = 4,
 ): Promise<Response> {
   const headers = new Headers(BASE_HEADERS);
@@ -50,9 +51,10 @@ export async function fetchWithRetry(
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const resp = await fetch(url, {
-        ...init,
+      const resp = await finnaHttp(url, {
+        method: init.method,
         headers,
+        body: init.body,
         redirect: init.redirect ?? "follow",
       });
 

@@ -22,6 +22,7 @@ Vercel Serverless
   └─ Server Actions (mutations)
 
 Homelab runner (T15, docker LXC 102 — home IP, see ADR-012)
+  ├─ finna-relay (:8787, via Cloudflare Tunnel) ← Vercel's Finna requests when FINNA_RELAY_URL is set
   ├─ systemd timer finna-job@sync  (daily 05:00 UTC) → refresh loan cache + "due soon" push
   └─ systemd timer finna-job@renew (Mondays 06:00 UTC)
        └─ For each user with auto_renew_enabled:
