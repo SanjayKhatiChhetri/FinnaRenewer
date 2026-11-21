@@ -1,0 +1,5 @@
+tunnel: 1b161807-9efb-4c08-9a4d-fd4c4a781d1a
+ingress:
+  - hostname: finna-relay.sanjaykhatichhetri.com.np
+    service: http://relay:8787
+  - service: http_status:404

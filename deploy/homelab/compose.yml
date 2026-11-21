@@ -17,13 +17,14 @@ services:
     env_file: /etc/finna-renewer/relay.env
     restart: unless-stopped
 
-  # Public entry for Vercel. The tunnel's hostname → http://relay:8787 route lives in the Cloudflare dashboard.
+  # Public entry for Vercel: finna-relay.sanjaykhatichhetri.com.np → relay (ingress in cloudflared.yml).
   cloudflared:
     image: cloudflare/cloudflared:2026.10.1@sha256:a15a3b50b8dabd57ac2090e9484c0247dba9dfa1f0df4d298d4317f9d69eb2d5
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
     environment:
       TUNNEL_TOKEN_FILE: /run/secrets/cf_tunnel_token
     volumes:
+      - ./cloudflared.yml:/etc/cloudflared/config.yml:ro
       - /etc/finna-renewer/cf_tunnel_token:/run/secrets/cf_tunnel_token:ro
     depends_on: [relay]
     restart: unless-stopped
