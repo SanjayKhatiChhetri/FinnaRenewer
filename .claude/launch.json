@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev (Turbopack)",
+      "runtimeExecutable": "wsl.exe",
+      "runtimeArgs": ["bash", "-lc", "source ~/.nvm/nvm.sh && cd ~/projects/finna-renewer && npm run dev -- -p 3005"],
+      "port": 3005,
+      "autoPort": false
+    },
+    {
+      "name": "Drizzle Studio",
+      "runtimeExecutable": "wsl.exe",
+      "runtimeArgs": ["bash", "-lc", "source ~/.nvm/nvm.sh && cd ~/projects/finna-renewer && npx dotenv-cli -e .env.local -- npx drizzle-kit studio"],
+      "port": 4983
+    }
+  ]
+}
