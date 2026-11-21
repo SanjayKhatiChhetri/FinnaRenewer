@@ -1,0 +1,8 @@
+services:
+  job:
+    build:
+      context: ../..
+      dockerfile: deploy/homelab/Dockerfile
+    image: finna-renewer-job
+    env_file: job.env
+    restart: "no"

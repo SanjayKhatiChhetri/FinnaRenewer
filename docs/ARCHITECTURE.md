@@ -19,8 +19,11 @@ Browser (PWA)
 Vercel Serverless
   ├─ Next.js App Router (pages + API routes)
   ├─ Auth.js v5 (JWT sessions, Credentials + OAuth providers)
-  ├─ Server Actions (mutations)
-  └─ Cron: /api/cron/renew (Mondays 6 AM UTC)
+  └─ Server Actions (mutations)
+
+Homelab runner (T15, docker LXC 102 — home IP, see ADR-012)
+  ├─ systemd timer finna-job@sync  (daily 05:00 UTC) → refresh loan cache + "due soon" push
+  └─ systemd timer finna-job@renew (Mondays 06:00 UTC)
        └─ For each user with auto_renew_enabled:
             1. Decrypt credentials (AES-256-GCM)
             2. Login to Finna (HTTP + cookie management)
@@ -42,8 +45,7 @@ External
 ## Data flow: renewal cycle
 
 ```
-Cron trigger (Monday 6 AM UTC)
-  → Authenticate via CRON_SECRET bearer token
+Homelab timer (Monday 6 AM UTC) → docker compose run --rm job renew
   → Query all users WHERE auto_renew_enabled = true
   → For each user:
       → Decrypt library credentials from DB
@@ -66,7 +68,7 @@ Cron trigger (Monday 6 AM UTC)
 | Auth                | Auth.js v5, JWT sessions, bcrypt (12 rounds) for passwords                   |
 | Credentials at rest | AES-256-GCM, per-record random IV, key from env var                          |
 | Route protection    | Next.js middleware checks session for /dashboard/_, /settings/_, /history/\* |
-| Cron auth           | Bearer token (CRON_SECRET)                                                   |
+| Background jobs     | Run on the homelab LAN; no public endpoint                                   |
 | CSRF                | Finna's own CSRF tokens extracted and submitted back                         |
 | Secrets             | All in env vars, never committed (.env.local gitignored)                     |
 
@@ -96,7 +98,6 @@ src/
 │   ├── (dashboard)/      Dashboard layout: dashboard, history, settings
 │   ├── api/
 │   │   ├── auth/         NextAuth route handler
-│   │   ├── cron/renew/   Vercel cron endpoint
 │   │   └── push/         Push subscription API
 │   ├── globals.css        Design system tokens
 │   ├── layout.tsx         Root layout (fonts, PWA meta)

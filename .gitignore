@@ -11,3 +11,5 @@ screenshots/
 .claude/settings.local.json
 .vercel
 
+dist/
+deploy/homelab/job.env

@@ -4,7 +4,7 @@
 
 - **Always work directly on `main`** — never create worktrees or feature branches. Commit directly to main and push.
 
-Multi-user web app that auto-renews Oulu Finna library loans. Users register, link encrypted Finna credentials, and loans due within N days get renewed weekly via Vercel Cron.
+Multi-user web app that auto-renews Oulu Finna library loans. Users register, link encrypted Finna credentials, and loans due within N days get renewed weekly by a homelab job (Finna blocks Vercel IPs).
 
 ## Stack
 
@@ -49,7 +49,7 @@ wsl.exe bash -lc "cd ~/projects/finna-renewer && source ~/.nvm/nvm.sh && set -a 
 | `src/app/globals.css`                   | Design system tokens (@theme)                                 |
 | `src/components/ui/`                    | Design system primitives (button, card, input, badge, toggle) |
 | `middleware.ts`                         | Route protection (auth guard)                                 |
-| `vercel.json`                           | Cron schedule (Monday 6 AM UTC)                               |
+| `deploy/homelab/`                       | Background jobs (renew, sync) on T15 — see ADR-012            |
 
 ## Documentation
 
@@ -103,7 +103,6 @@ Required in `.env.local` (and Vercel dashboard):
 - `DATABASE_URL` — Neon PostgreSQL connection string
 - `AUTH_SECRET` — Auth.js signing secret
 - `ENCRYPTION_KEY` — 64-char hex for AES-256-GCM
-- `CRON_SECRET` — Bearer token for cron endpoint
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — Web Push public key
 - `VAPID_PRIVATE_KEY` — Web Push private key
 - `VAPID_SUBJECT` — mailto: for VAPID

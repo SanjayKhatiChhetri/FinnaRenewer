@@ -96,7 +96,7 @@ Decisions made during development, with context. When you revisit a decision, up
 
 ## ADR-008: Weekly cron over real-time monitoring
 
-**Decision**: Run renewals once per week (Monday 6 AM UTC) via Vercel Cron.
+**Decision**: Run renewals once per week (Monday 6 AM UTC). Originally via Vercel Cron; moved to the homelab in ADR-012.
 
 **Context**: The Go version also ran weekly. Library loans typically have 28-day terms. Checking once/week with a 7-day-before-due threshold catches everything with margin.
 
@@ -141,3 +141,15 @@ Decisions made during development, with context. When you revisit a decision, up
 **Consequence**: Shared variants in `src/lib/motion.ts` mirror the CSS ease tokens. Every animation is gated on `useReducedMotion`; the global `prefers-reduced-motion` block remains the backstop.
 
 **Trade-off**: One client-side dependency (~adds to First Load JS on animated routes). Accepted for the UX gain; static/server components are unaffected.
+
+---
+
+## ADR-012: Background jobs run on the homelab, not Vercel Cron
+
+**Decision**: The weekly renewal and daily sync run as a Docker one-shot (`deploy/homelab/`) on the T15 docker LXC, triggered by systemd timers. The Vercel cron routes are removed.
+
+**Context**: From 2026-11-16 Finna's Cloudflare answers every request from Vercel/AWS IPs with a JS challenge (HTTP 403, `cf-mitigated: challenge`). No header change gets past it. The same request from the home connection gets 200. The Nov 16 renewal and every sync after it failed.
+
+**Trade-off**: Jobs depend on T15 being up. `Persistent=true` on the timers runs a missed job when the host comes back. User actions in the web app (manual renew, refresh) still go out from Vercel and stay blocked until they are routed through a home-network relay too.
+
+**Deploy**: `deploy/homelab/deploy.sh` ships the committed HEAD and the five runtime env vars, rebuilds the image and re-enables the timers.

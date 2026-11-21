@@ -1,0 +1,8 @@
+[Unit]
+Description=Finna Renewer background job: %i
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker compose -f /opt/stacks/finna-renewer/deploy/homelab/compose.yml run --rm job %i
