@@ -1,3 +1,5 @@
+name: finna-renewer
+
 services:
   job:
     build:
