@@ -17,8 +17,10 @@ grep -E '^(DATABASE_URL|ENCRYPTION_KEY|NEXT_PUBLIC_VAPID_PUBLIC_KEY|VAPID_PRIVAT
   ssh "$PVE_HOST" "pct exec $LXC_ID -- bash -c 'umask 077 && cat > $STACK_DIR.new/deploy/homelab/job.env'"
 
 # Persistent secrets live outside the stack dir, which is replaced on every deploy.
-in_lxc "mkdir -p /etc/finna-renewer && chmod 700 /etc/finna-renewer \
-  && { [ -f /etc/finna-renewer/relay.env ] || (umask 077 && echo FINNA_RELAY_SECRET=\$(openssl rand -hex 32) > /etc/finna-renewer/relay.env); }"
+# cloudflared runs as uid 65532, so it owns the token file and may traverse the dir.
+in_lxc "mkdir -p /etc/finna-renewer && chmod 711 /etc/finna-renewer \
+  && { [ -f /etc/finna-renewer/relay.env ] || (umask 077 && echo FINNA_RELAY_SECRET=\$(openssl rand -hex 32) > /etc/finna-renewer/relay.env); } \
+  && { [ ! -f /etc/finna-renewer/cf_tunnel_token ] || chown 65532 /etc/finna-renewer/cf_tunnel_token; }"
 
 COMPOSE="docker compose -f $STACK_DIR/deploy/homelab/compose.yml"
 in_lxc "rm -rf $STACK_DIR && mv $STACK_DIR.new $STACK_DIR \
