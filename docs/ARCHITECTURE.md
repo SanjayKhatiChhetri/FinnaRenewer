@@ -6,12 +6,46 @@ Finna Renewer is a web app that automatically renews Oulu Finna library loans be
 
 ## System diagram
 
+```mermaid
+flowchart TB
+  browser["Browser (frontend)<br/>Next.js pages, PWA, push"]
+
+  subgraph vercel["Vercel (backend)"]
+    actions["Server actions<br/>Auth.js, page data"]
+    client["Finna client<br/>relay switch"]
+  end
+
+  subgraph neon["Neon Postgres (database)"]
+    tables["App tables<br/>users, credentials, logs"]
+    cache["Loan cache<br/>library_cache table"]
+  end
+
+  subgraph homelab["Homelab T15 · LXC 102 · home IP"]
+    tunnel["Cloudflare tunnel"]
+    relay["Finna relay"]
+    timers["Job timers<br/>daily sync, Monday renew"]
+  end
+
+  finna["Finna (OUTI, OULA)<br/>behind Cloudflare"]
+
+  browser --> actions
+  actions --> tables
+  actions --> cache
+  actions --> client
+  client --> tunnel --> relay --> finna
+  timers --> finna
+  timers --> cache
+  timers --> tables
+```
+
+Finna's Cloudflare blocks Vercel's IPs, so every Finna request leaves from the homelab (ADR-012). The dashboard reads loans from `library_cache`; the daily sync and manual refresh keep it fresh.
+
 ```
 Browser (PWA)
   ├─ Landing page (static)
   ├─ Auth pages (login/register)
   └─ Dashboard (server components + client interactivity)
-       ├─ View loans (fetched live from Finna)
+       ├─ View loans (from library_cache, refreshed on demand)
        ├─ Manual renew
        ├─ Settings (credentials, notifications, preferences)
        └─ Renewal history (from DB)
@@ -34,8 +68,9 @@ Homelab runner (T15, docker LXC 102 — home IP, see ADR-012)
             6. Notify via Discord + web push
 
 Neon PostgreSQL (serverless)
-  └─ 8 tables: users, accounts, sessions, verification_tokens,
-     library_credentials, user_settings, push_subscriptions, renewal_logs
+  └─ 9 tables: users, accounts, sessions, verification_tokens,
+     library_credentials, user_settings, push_subscriptions,
+     library_cache, renewal_logs
 
 External
   ├─ outi.finna.fi (Oulu library portal — scraping target)

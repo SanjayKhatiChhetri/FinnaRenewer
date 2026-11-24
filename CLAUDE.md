@@ -45,7 +45,7 @@ wsl.exe bash -lc "cd ~/projects/finna-renewer && source ~/.nvm/nvm.sh && set -a 
 | `src/server/finna/`                     | Finna HTTP scraping (login, loans, renew)                     |
 | `src/server/services/encryption.ts`     | AES-256-GCM encrypt/decrypt                                   |
 | `src/lib/auth.ts`                       | Auth.js config (providers, JWT callbacks)                     |
-| `src/lib/db/schema.ts`                  | All 8 database tables                                         |
+| `src/lib/db/schema.ts`                  | All 9 database tables                                         |
 | `src/app/globals.css`                   | Design system tokens (@theme)                                 |
 | `src/components/ui/`                    | Design system primitives (button, card, input, badge, toggle) |
 | `middleware.ts`                         | Route protection (auth guard)                                 |
