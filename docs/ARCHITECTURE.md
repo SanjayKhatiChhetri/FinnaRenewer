@@ -6,37 +6,9 @@ Finna Renewer is a web app that automatically renews Oulu Finna library loans be
 
 ## System diagram
 
-```mermaid
-flowchart TB
-  browser["Browser (frontend)<br/>Next.js pages, PWA, push"]
+![Finna Renewer architecture: browser, Vercel, Neon with the loan cache, homelab relay and timers, Finna](architecture.png)
 
-  subgraph vercel["Vercel (backend)"]
-    actions["Server actions<br/>Auth.js, page data"]
-    client["Finna client<br/>relay switch"]
-  end
-
-  subgraph neon["Neon Postgres (database)"]
-    tables["App tables<br/>users, credentials, logs"]
-    cache["Loan cache<br/>library_cache table"]
-  end
-
-  subgraph homelab["Homelab T15 · LXC 102 · home IP"]
-    tunnel["Cloudflare tunnel"]
-    relay["Finna relay"]
-    timers["Job timers<br/>daily sync, Monday renew"]
-  end
-
-  finna["Finna (OUTI, OULA)<br/>behind Cloudflare"]
-
-  browser --> actions
-  actions --> tables
-  actions --> cache
-  actions --> client
-  client --> tunnel --> relay --> finna
-  timers --> finna
-  timers --> cache
-  timers --> tables
-```
+Source: [`architecture.html`](architecture.html) (drawn with the diagram-design skill; SVG export in [`architecture.svg`](architecture.svg)).
 
 Finna's Cloudflare blocks Vercel's IPs, so every Finna request leaves from the homelab (ADR-012). The dashboard reads loans from `library_cache`; the daily sync and manual refresh keep it fresh.
 

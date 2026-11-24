@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finna Renewer · Architecture</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --color-paper: #fdfcfa;
+        --color-ink: #1e1916;
+        --color-muted: #5e5652;
+        --color-accent: #a1252a;
+        --font-sans: "Inter", system-ui, sans-serif;
+        --font-serif: "Fraunces", serif;
+        --font-mono: "Geist Mono", ui-monospace, monospace;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--color-paper);
+        color: var(--color-ink);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+      }
+
+      .frame {
+        max-width: 1200px;
+        width: 100%;
+      }
+      .diagram-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      h1 {
+        font-family: var(--font-serif);
+        font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: var(--color-ink);
+        margin-bottom: 1.5rem;
+      }
+
+      svg {
+        width: 100%;
+        min-width: 960px;
+        display: block;
+      }
+      @media print {
+        .diagram-container {
+          overflow-x: visible;
+        }
+        svg {
+          min-width: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Architecture · Diagram Design</p>
+      <h1>Finna Renewer: every Finna call leaves from home</h1>
+
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 600"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="architecture-title architecture-desc"
+        >
+          <title id="architecture-title">Finna Renewer architecture</title>
+          <desc id="architecture-desc">
+            The browser talks to Next.js server actions on Vercel, which read
+            and write Neon Postgres including the library_cache loan cache,
+            while every Finna request goes through a Cloudflare tunnel to a
+            relay on the homelab T15, whose timers also run the daily sync and
+            weekly renewal.
+          </desc>
+          <defs>
+            <marker
+              id="arrow"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#5e5652" />
+            </marker>
+            <marker
+              id="arrow-accent"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#a1252a" />
+            </marker>
+            <marker
+              id="arrow-link"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#2266a4" />
+            </marker>
+          </defs>
+
+          <rect width="100%" height="100%" fill="#fdfcfa" />
+
+          <!-- Zones -->
+          <rect
+            x="184"
+            y="64"
+            width="428"
+            height="116"
+            rx="8"
+            fill="rgba(30,25,22,0.02)"
+            stroke="rgba(30,25,22,0.10)"
+            stroke-width="0.8"
+          />
+          <rect x="370" y="68" width="56" height="12" rx="2" fill="#fdfcfa" />
+          <text
+            x="398"
+            y="77"
+            fill="#6c6461"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.14em"
+          >
+            VERCEL
+          </text>
+
+          <rect
+            x="40"
+            y="240"
+            width="352"
+            height="116"
+            rx="8"
+            fill="rgba(30,25,22,0.02)"
+            stroke="rgba(30,25,22,0.10)"
+            stroke-width="0.8"
+          />
+          <rect x="168" y="244" width="96" height="12" rx="2" fill="#fdfcfa" />
+          <text
+            x="216"
+            y="253"
+            fill="#6c6461"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.14em"
+          >
+            NEON POSTGRES
+          </text>
+
+          <rect
+            x="412"
+            y="240"
+            width="352"
+            height="220"
+            rx="8"
+            fill="rgba(30,25,22,0.02)"
+            stroke="rgba(30,25,22,0.10)"
+            stroke-width="0.8"
+          />
+          <rect x="520" y="244" width="136" height="12" rx="2" fill="#fdfcfa" />
+          <text
+            x="588"
+            y="253"
+            fill="#6c6461"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.14em"
+          >
+            HOMELAB T15 · LXC 102
+          </text>
+
+          <!-- Arrows (behind nodes) -->
+          <line
+            x1="160"
+            y1="128"
+            x2="202"
+            y2="128"
+            stroke="#2266a4"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <line
+            x1="380"
+            y1="128"
+            x2="414"
+            y2="128"
+            stroke="#5e5652"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="300"
+            y1="160"
+            x2="300"
+            y2="270"
+            stroke="#5e5652"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M 240,160 V 200 Q 240,208 232,208 H 140 Q 132,208 132,216 V 270"
+            fill="none"
+            stroke="#5e5652"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="504"
+            y1="160"
+            x2="504"
+            y2="270"
+            stroke="#2266a4"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <line
+            x1="576"
+            y1="304"
+            x2="598"
+            y2="304"
+            stroke="#2266a4"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <line
+            x1="744"
+            y1="304"
+            x2="798"
+            y2="304"
+            stroke="#2266a4"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <path
+            d="M 744,408 H 852 Q 860,408 860,400 V 338"
+            fill="none"
+            stroke="#2266a4"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <path
+            d="M 600,396 H 308 Q 300,396 300,388 V 338"
+            fill="none"
+            stroke="#5e5652"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M 600,420 H 140 Q 132,420 132,412 V 338"
+            fill="none"
+            stroke="#5e5652"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+
+          <!-- Arrow labels -->
+          <rect x="164" y="108" width="36" height="12" rx="2" fill="#fdfcfa" />
+          <text
+            x="182"
+            y="117"
+            fill="#2266a4"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            HTTPS
+          </text>
+
+          <rect x="512" y="204" width="64" height="12" rx="2" fill="#fdfcfa" />
+          <text
+            x="544"
+            y="213"
+            fill="#2266a4"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            VIA TUNNEL
+          </text>
+
+          <rect x="752" y="284" width="40" height="12" rx="2" fill="#fdfcfa" />
+          <text
+            x="772"
+            y="293"
+            fill="#2266a4"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            HOME IP
+          </text>
+
+          <!-- Node: Browser (input) -->
+          <rect x="40" y="96" width="120" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="40"
+            y="96"
+            width="120"
+            height="64"
+            rx="6"
+            fill="rgba(94,86,82,0.10)"
+            stroke="#6c6461"
+            stroke-width="1"
+          />
+          <rect
+            x="48"
+            y="104"
+            width="32"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(108,100,97,0.40)"
+            stroke-width="0.8"
+          />
+          <text
+            x="64"
+            y="113"
+            fill="#6c6461"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            USER
+          </text>
+          <text
+            x="100"
+            y="134"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Browser
+          </text>
+          <text
+            x="100"
+            y="150"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            PWA · push
+          </text>
+
+          <!-- Node: Server actions (backend) -->
+          <rect x="204" y="96" width="176" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="204"
+            y="96"
+            width="176"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#1e1916"
+            stroke-width="1"
+          />
+          <rect
+            x="212"
+            y="104"
+            width="28"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(30,25,22,0.40)"
+            stroke-width="0.8"
+          />
+          <text
+            x="226"
+            y="113"
+            fill="#1e1916"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            API
+          </text>
+          <text
+            x="292"
+            y="134"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Server actions
+          </text>
+          <text
+            x="292"
+            y="150"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            Auth.js · pages
+          </text>
+
+          <!-- Node: Finna client (backend) -->
+          <rect x="416" y="96" width="176" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="416"
+            y="96"
+            width="176"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#1e1916"
+            stroke-width="1"
+          />
+          <rect
+            x="424"
+            y="104"
+            width="28"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(30,25,22,0.40)"
+            stroke-width="0.8"
+          />
+          <text
+            x="438"
+            y="113"
+            fill="#1e1916"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            LIB
+          </text>
+          <text
+            x="504"
+            y="134"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Finna client
+          </text>
+          <text
+            x="504"
+            y="150"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            relay switch
+          </text>
+
+          <!-- Node: App tables (store) -->
+          <rect x="60" y="272" width="144" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="60"
+            y="272"
+            width="144"
+            height="64"
+            rx="6"
+            fill="rgba(30,25,22,0.05)"
+            stroke="#5e5652"
+            stroke-width="1"
+          />
+          <rect
+            x="68"
+            y="280"
+            width="24"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(94,86,82,0.50)"
+            stroke-width="0.8"
+          />
+          <text
+            x="80"
+            y="289"
+            fill="#5e5652"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            DB
+          </text>
+          <text
+            x="132"
+            y="310"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            App tables
+          </text>
+          <text
+            x="132"
+            y="326"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            users · logs
+          </text>
+
+          <!-- Node: Loan cache (focal) -->
+          <rect x="228" y="272" width="144" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="228"
+            y="272"
+            width="144"
+            height="64"
+            rx="6"
+            fill="rgba(161,37,42,0.08)"
+            stroke="#a1252a"
+            stroke-width="1"
+          />
+          <rect
+            x="236"
+            y="280"
+            width="40"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(161,37,42,0.50)"
+            stroke-width="0.8"
+          />
+          <text
+            x="256"
+            y="289"
+            fill="#a1252a"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            CACHE
+          </text>
+          <text
+            x="300"
+            y="310"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Loan cache
+          </text>
+          <text
+            x="300"
+            y="326"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            library_cache
+          </text>
+
+          <!-- Node: Cloudflare tunnel (external) -->
+          <rect x="432" y="272" width="144" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="432"
+            y="272"
+            width="144"
+            height="64"
+            rx="6"
+            fill="rgba(30,25,22,0.03)"
+            stroke="rgba(30,25,22,0.30)"
+            stroke-width="1"
+          />
+          <rect
+            x="440"
+            y="280"
+            width="32"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(30,25,22,0.22)"
+            stroke-width="0.8"
+          />
+          <text
+            x="456"
+            y="289"
+            fill="#6c6461"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            EDGE
+          </text>
+          <text
+            x="504"
+            y="310"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Cloudflare tunnel
+          </text>
+          <text
+            x="504"
+            y="326"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            finna-relay host
+          </text>
+
+          <!-- Node: Finna relay (focal) -->
+          <rect x="600" y="272" width="144" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="600"
+            y="272"
+            width="144"
+            height="64"
+            rx="6"
+            fill="rgba(161,37,42,0.08)"
+            stroke="#a1252a"
+            stroke-width="1"
+          />
+          <rect
+            x="608"
+            y="280"
+            width="40"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(161,37,42,0.50)"
+            stroke-width="0.8"
+          />
+          <text
+            x="628"
+            y="289"
+            fill="#a1252a"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            PROXY
+          </text>
+          <text
+            x="672"
+            y="310"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Finna relay
+          </text>
+          <text
+            x="672"
+            y="326"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            bearer secret
+          </text>
+
+          <!-- Node: Job timers (backend) -->
+          <rect x="600" y="376" width="144" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="600"
+            y="376"
+            width="144"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#1e1916"
+            stroke-width="1"
+          />
+          <rect
+            x="608"
+            y="384"
+            width="32"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(30,25,22,0.40)"
+            stroke-width="0.8"
+          />
+          <text
+            x="624"
+            y="393"
+            fill="#1e1916"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            CRON
+          </text>
+          <text
+            x="672"
+            y="414"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Job timers
+          </text>
+          <text
+            x="672"
+            y="430"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            sync · renew
+          </text>
+
+          <!-- Node: Finna (external) -->
+          <rect x="800" y="272" width="120" height="64" rx="6" fill="#fdfcfa" />
+          <rect
+            x="800"
+            y="272"
+            width="120"
+            height="64"
+            rx="6"
+            fill="rgba(30,25,22,0.03)"
+            stroke="rgba(30,25,22,0.30)"
+            stroke-width="1"
+          />
+          <rect
+            x="808"
+            y="280"
+            width="28"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="rgba(30,25,22,0.22)"
+            stroke-width="0.8"
+          />
+          <text
+            x="822"
+            y="289"
+            fill="#6c6461"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            EXT
+          </text>
+          <text
+            x="860"
+            y="310"
+            fill="#1e1916"
+            font-size="12"
+            font-weight="600"
+            font-family="'Inter', sans-serif"
+            text-anchor="middle"
+          >
+            Finna
+          </text>
+          <text
+            x="860"
+            y="326"
+            fill="#5e5652"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            OUTI · OULA
+          </text>
+
+          <!-- Legend strip -->
+          <line
+            x1="40"
+            y1="548"
+            x2="920"
+            y2="548"
+            stroke="rgba(30,25,22,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="40"
+            y="564"
+            fill="#5e5652"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            LEGEND
+          </text>
+
+          <rect
+            x="40"
+            y="576"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(161,37,42,0.08)"
+            stroke="#a1252a"
+            stroke-width="1"
+          />
+          <text
+            x="60"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            Focal
+          </text>
+
+          <rect
+            x="128"
+            y="576"
+            width="14"
+            height="10"
+            rx="2"
+            fill="#ffffff"
+            stroke="#1e1916"
+            stroke-width="1"
+          />
+          <text
+            x="148"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            Backend
+          </text>
+
+          <rect
+            x="228"
+            y="576"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(30,25,22,0.05)"
+            stroke="#5e5652"
+            stroke-width="1"
+          />
+          <text
+            x="248"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            Store
+          </text>
+
+          <rect
+            x="316"
+            y="576"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(30,25,22,0.03)"
+            stroke="rgba(30,25,22,0.30)"
+            stroke-width="1"
+          />
+          <text
+            x="336"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            External
+          </text>
+
+          <rect
+            x="416"
+            y="576"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(94,86,82,0.10)"
+            stroke="#6c6461"
+            stroke-width="1"
+          />
+          <text
+            x="436"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            User
+          </text>
+
+          <line
+            x1="500"
+            y1="582"
+            x2="528"
+            y2="582"
+            stroke="#2266a4"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <text
+            x="536"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            HTTP request
+          </text>
+
+          <line
+            x1="640"
+            y1="582"
+            x2="668"
+            y2="582"
+            stroke="#5e5652"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <text
+            x="676"
+            y="584"
+            fill="#5e5652"
+            font-size="8.5"
+            font-family="'Inter', sans-serif"
+          >
+            Database read / write
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>
